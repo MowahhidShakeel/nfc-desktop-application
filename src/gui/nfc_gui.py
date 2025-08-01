@@ -18,8 +18,8 @@ class NFCWindow(QMainWindow):
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
         self.connect_button = QPushButton("Connect to Reader")
-        self.write_button = QPushButton("Write to Page 4")
-        self.read_button = QPushButton("Read from Page 4")
+        self.write_button = QPushButton("Write to Block 4")
+        self.read_button = QPushButton("Read from Block 4")
         self.write_button.setEnabled(False)
         self.read_button.setEnabled(False)
 
@@ -37,8 +37,8 @@ class NFCWindow(QMainWindow):
 
         # Connect button signals
         self.connect_button.clicked.connect(self.connect_reader)
-        self.write_button.clicked.connect(self.write_page)
-        self.read_button.clicked.connect(self.read_page)
+        self.write_button.clicked.connect(self.write_block)
+        self.read_button.clicked.connect(self.read_block)
 
         # Initial check for reader
         if self.nfc.reader is None:
@@ -62,20 +62,21 @@ class NFCWindow(QMainWindow):
             self.status_label.setText("Connection failed")
             self.log(f"Error: {e}")
 
-    def write_page(self):
-        """Write test data to page 4."""
+    def write_block(self):
+        """Write test data to block 4."""
         try:
-            test_data = [0x01, 0x02, 0x03, 0x04]
-            self.nfc.write_page(4, test_data)
-            self.log(f"Wrote to page 4: {test_data}")
+            test_data = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                         0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10]
+            self.nfc.write_block(4, test_data)
+            self.log(f"Wrote to block 4: {test_data}")
         except Exception as e:
             self.log(f"Write error: {e}")
 
-    def read_page(self):
-        """Read data from page 4."""
+    def read_block(self):
+        """Read data from block 4."""
         try:
-            data = self.nfc.read_page(4)
-            self.log(f"Read from page 4: {data}")
+            data = self.nfc.read_block(4)
+            self.log(f"Read from block 4: {data}")
         except Exception as e:
             self.log(f"Read error: {e}")
 
