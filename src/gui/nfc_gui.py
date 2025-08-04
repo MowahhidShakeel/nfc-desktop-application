@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTextEdit, QLabel
 from src.core.nfc_handler import NFCHandler
+from src.core.logging_config import setup_logger
 import sys
 
 class NFCWindow(QMainWindow):
@@ -8,7 +9,8 @@ class NFCWindow(QMainWindow):
         self.setWindowTitle("NFC Desktop Application")
         self.setGeometry(100, 100, 400, 300)
 
-        # Initialize NFC handler
+        # Initialize logger and NFC handler
+        self.logger = setup_logger()
         self.nfc = NFCHandler()
         self.is_connected = False
 
@@ -18,8 +20,8 @@ class NFCWindow(QMainWindow):
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
         self.connect_button = QPushButton("Connect to Reader")
-        self.write_button = QPushButton("Write to Block 4")
-        self.read_button = QPushButton("Read from Block 4")
+        self.write_button = QPushButton("Write to NFC Card")
+        self.read_button = QPushButton("Read from NFC Card")
         self.write_button.setEnabled(False)
         self.read_button.setEnabled(False)
 
@@ -44,9 +46,13 @@ class NFCWindow(QMainWindow):
         if self.nfc.reader is None:
             self.log("No NFC reader detected or Smart Card service not running")
 
-    def log(self, message):
-        """Append message to the log area."""
+    def log(self, message, level='INFO'):
+        """Append message to the log area and file."""
         self.log_area.append(message)
+        if level == 'INFO':
+            self.logger.info(message)
+        elif level == 'ERROR':
+            self.logger.error(message)
 
     def connect_reader(self):
         """Connect to the NFC reader."""
@@ -60,7 +66,7 @@ class NFCWindow(QMainWindow):
                 self.read_button.setEnabled(True)
         except Exception as e:
             self.status_label.setText("Connection failed")
-            self.log(f"Error: {e}")
+            self.log(f"Error: {e}", level='ERROR')
 
     def write_block(self):
         """Write test data to block 4."""
@@ -70,7 +76,7 @@ class NFCWindow(QMainWindow):
             self.nfc.write_block(4, test_data)
             self.log(f"Wrote to block 4: {test_data}")
         except Exception as e:
-            self.log(f"Write error: {e}")
+            self.log(f"Write error: {e}", level='ERROR')
 
     def read_block(self):
         """Read data from block 4."""
@@ -78,7 +84,7 @@ class NFCWindow(QMainWindow):
             data = self.nfc.read_block(4)
             self.log(f"Read from block 4: {data}")
         except Exception as e:
-            self.log(f"Read error: {e}")
+            self.log(f"Read error: {e}", level='ERROR')
 
     def closeEvent(self, event):
         """Handle window close event to disconnect reader."""
