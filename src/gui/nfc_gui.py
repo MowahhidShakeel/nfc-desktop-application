@@ -4,8 +4,10 @@ from PyQt6.QtWidgets import (
     QFileDialog, QTabWidget, QTextBrowser
 )
 from src.core.nfc_handler import NFCHandler
+from src.core.config_handler import ConfigHandler
 from src.core.logging_config import setup_logger
 import sys
+import json
 
 class NFCWindow(QMainWindow):
     def __init__(self):
@@ -13,9 +15,10 @@ class NFCWindow(QMainWindow):
         self.setWindowTitle("NFC Desktop Application")
         self.setGeometry(100, 100, 600, 900)
 
-        # Initialize logger and NFC handler
+        # Initialize logger, NFC handler, and config handler
         self.logger = setup_logger()
         self.nfc = NFCHandler()
+        self.config_handler = ConfigHandler()
         self.is_connected = False
 
         # Create main layout
@@ -49,14 +52,18 @@ class NFCWindow(QMainWindow):
         wifi_widget = QWidget()
         wifi_layout = QFormLayout()
         self.wifi_ssid = QLineEdit()
+        self.wifi_ssid.setMaxLength(32)
         self.wifi_password = QLineEdit()
+        self.wifi_password.setMaxLength(64)
         self.wifi_enterprise_mode = QSpinBox()
         self.wifi_enterprise_mode.setRange(0, 255)
         self.wifi_enterprise_identity = QLineEdit()
+        self.wifi_enterprise_identity.setMaxLength(64)
         self.wifi_enterprise_username = QLineEdit()
+        self.wifi_enterprise_username.setMaxLength(64)
         wifi_layout.addRow("Wi-Fi SSID:", self.wifi_ssid)
         wifi_layout.addRow("Wi-Fi Password:", self.wifi_password)
-        wifi_layout.addRow("Wi-Fi Enterprise Mode (0-255):", self.wifi_enterprise_mode)
+        wifi_layout.addRow("Wi-Fi Enterprise Mode:", self.wifi_enterprise_mode)
         wifi_layout.addRow("Wi-Fi Enterprise Identity:", self.wifi_enterprise_identity)
         wifi_layout.addRow("Wi-Fi Enterprise Username:", self.wifi_enterprise_username)
         wifi_widget.setLayout(wifi_layout)
@@ -66,11 +73,15 @@ class NFCWindow(QMainWindow):
         mqtt_widget = QWidget()
         mqtt_layout = QFormLayout()
         self.mqtt_host = QLineEdit()
+        self.mqtt_host.setMaxLength(64)
         self.mqtt_host_type = QLineEdit()
+        self.mqtt_host_type.setMaxLength(16)
         self.mqtt_port = QSpinBox()
         self.mqtt_port.setRange(0, 65535)
         self.mqtt_username = QLineEdit()
+        self.mqtt_username.setMaxLength(32)
         self.mqtt_password = QLineEdit()
+        self.mqtt_password.setMaxLength(32)
         mqtt_layout.addRow("MQTT Host:", self.mqtt_host)
         mqtt_layout.addRow("MQTT Host Type:", self.mqtt_host_type)
         mqtt_layout.addRow("MQTT Port:", self.mqtt_port)
@@ -84,15 +95,20 @@ class NFCWindow(QMainWindow):
         ip_layout = QFormLayout()
         self.ip_dhcp_enabled = QCheckBox()
         self.ip_address = QLineEdit()
+        self.ip_address.setMaxLength(15)
         self.ip_netmask = QSpinBox()
         self.ip_netmask.setRange(0, 32)
         self.ip_gateway = QLineEdit()
+        self.ip_gateway.setMaxLength(15)
         self.ip_dns1 = QLineEdit()
+        self.ip_dns1.setMaxLength(15)
         self.ip_dns2 = QLineEdit()
+        self.ip_dns2.setMaxLength(15)
         self.ip_dns3 = QLineEdit()
+        self.ip_dns3.setMaxLength(15)
         ip_layout.addRow("IP DHCP Enabled:", self.ip_dhcp_enabled)
         ip_layout.addRow("IP Address:", self.ip_address)
-        ip_layout.addRow("IP Netmask (0-32):", self.ip_netmask)
+        ip_layout.addRow("IP Netmask:", self.ip_netmask)
         ip_layout.addRow("IP Gateway:", self.ip_gateway)
         ip_layout.addRow("IP DNS 1:", self.ip_dns1)
         ip_layout.addRow("IP DNS 2:", self.ip_dns2)
@@ -104,11 +120,17 @@ class NFCWindow(QMainWindow):
         sntp_widget = QWidget()
         sntp_layout = QFormLayout()
         self.sntp_server1_value = QLineEdit()
+        self.sntp_server1_value.setMaxLength(32)
         self.sntp_server1_type = QLineEdit()
+        self.sntp_server1_type.setMaxLength(16)
         self.sntp_server2_value = QLineEdit()
+        self.sntp_server2_value.setMaxLength(32)
         self.sntp_server2_type = QLineEdit()
+        self.sntp_server2_type.setMaxLength(16)
         self.sntp_server3_value = QLineEdit()
+        self.sntp_server3_value.setMaxLength(32)
         self.sntp_server3_type = QLineEdit()
+        self.sntp_server3_type.setMaxLength(16)
         sntp_layout.addRow("SNTP Server 1 Value:", self.sntp_server1_value)
         sntp_layout.addRow("SNTP Server 1 Type:", self.sntp_server1_type)
         sntp_layout.addRow("SNTP Server 2 Value:", self.sntp_server2_value)
@@ -231,6 +253,72 @@ class NFCWindow(QMainWindow):
         )
         self.summary_display.setPlainText(summary_text)
 
+    def get_config(self):
+        """Get configuration from GUI fields."""
+        config = {
+            "wifi": {
+                "ssid": self.wifi_ssid.text(),
+                "password": self.wifi_password.text(),
+                "enterpriseMode": self.wifi_enterprise_mode.value(),
+                "enterpriseIdentity": self.wifi_enterprise_identity.text(),
+                "enterpriseUsername": self.wifi_enterprise_username.text()
+            },
+            "mqtt": {
+                "host": self.mqtt_host.text(),
+                "hostType": self.mqtt_host_type.text(),
+                "port": self.mqtt_port.value(),
+                "username": self.mqtt_username.text(),
+                "password": self.mqtt_password.text()
+            },
+            "ip": {
+                "dhcpEnabled": self.ip_dhcp_enabled.isChecked(),
+                "ipAddress": self.ip_address.text(),
+                "netmask": self.ip_netmask.value(),
+                "gateway": self.ip_gateway.text(),
+                "dns1": self.ip_dns1.text(),
+                "dns2": self.ip_dns2.text(),
+                "dns3": self.ip_dns3.text()
+            },
+            "sntp": {
+                "server1": {"value": self.sntp_server1_value.text(), "type": self.sntp_server1_type.text()},
+                "server2": {"value": self.sntp_server2_value.text(), "type": self.sntp_server2_type.text()},
+                "server3": {"value": self.sntp_server3_value.text(), "type": self.sntp_server3_type.text()}
+            }
+        }
+        return config
+
+    def set_config(self, config):
+        """Set GUI fields from configuration."""
+        try:
+            self.config_handler.validate_config(config)
+            self.wifi_ssid.setText(config["wifi"]["ssid"])
+            self.wifi_password.setText(config["wifi"]["password"])
+            self.wifi_enterprise_mode.setValue(config["wifi"]["enterpriseMode"])
+            self.wifi_enterprise_identity.setText(config["wifi"]["enterpriseIdentity"])
+            self.wifi_enterprise_username.setText(config["wifi"]["enterpriseUsername"])
+            self.mqtt_host.setText(config["mqtt"]["host"])
+            self.mqtt_host_type.setText(config["mqtt"]["hostType"])
+            self.mqtt_port.setValue(config["mqtt"]["port"])
+            self.mqtt_username.setText(config["mqtt"]["username"])
+            self.mqtt_password.setText(config["mqtt"]["password"])
+            self.ip_dhcp_enabled.setChecked(config["ip"]["dhcpEnabled"])
+            self.ip_address.setText(config["ip"]["ipAddress"])
+            self.ip_netmask.setValue(config["ip"]["netmask"])
+            self.ip_gateway.setText(config["ip"]["gateway"])
+            self.ip_dns1.setText(config["ip"]["dns1"])
+            self.ip_dns2.setText(config["ip"]["dns2"])
+            self.ip_dns3.setText(config["ip"]["dns3"])
+            self.sntp_server1_value.setText(config["sntp"]["server1"]["value"])
+            self.sntp_server1_type.setText(config["sntp"]["server1"]["type"])
+            self.sntp_server2_value.setText(config["sntp"]["server2"]["value"])
+            self.sntp_server2_type.setText(config["sntp"]["server2"]["type"])
+            self.sntp_server3_value.setText(config["sntp"]["server3"]["value"])
+            self.sntp_server3_type.setText(config["sntp"]["server3"]["type"])
+            self.update_summary()
+        except Exception as e:
+            self.log(f"Error setting config: {e}", level="ERROR")
+            raise
+
     def connect_reader(self):
         """Connect to the NFC reader."""
         try:
@@ -254,8 +342,10 @@ class NFCWindow(QMainWindow):
                 self, "Import JSON Config", "", "JSON Files (*.json)"
             )
             if file_name:
-                self.log(f"Importing JSON from {file_name}")
-                raise NotImplementedError("JSON import not yet implemented")
+                with open(file_name, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+                self.set_config(config)
+                self.log(f"Imported JSON from {file_name}")
         except Exception as e:
             self.log(f"Import error: {e}", level="ERROR")
 
@@ -266,8 +356,11 @@ class NFCWindow(QMainWindow):
                 self, "Export JSON Config", "", "JSON Files (*.json)"
             )
             if file_name:
-                self.log(f"Exporting JSON to {file_name}")
-                raise NotImplementedError("JSON export not yet implemented")
+                config = self.get_config()
+                self.config_handler.validate_config(config)
+                with open(file_name, "w", encoding="utf-8") as f:
+                    json.dump(config, f, indent=2)
+                self.log(f"Exported JSON to {file_name}")
         except Exception as e:
             self.log(f"Export error: {e}", level="ERROR")
 
@@ -280,7 +373,7 @@ class NFCWindow(QMainWindow):
             self.wifi_enterprise_identity.clear()
             self.wifi_enterprise_username.clear()
             self.mqtt_host.clear()
-            self.mqtt_host_type.clear()
+            self.mqtt_host_type.setText("hostname")
             self.mqtt_port.setValue(1883)
             self.mqtt_username.clear()
             self.mqtt_password.clear()
@@ -305,16 +398,20 @@ class NFCWindow(QMainWindow):
     def read_nfc_config(self):
         """Read network configuration from NFC tag."""
         try:
-            self.log("Reading configuration from NFC tag")
-            raise NotImplementedError("NFC read not yet implemented")
+            data = self.nfc.read_config()
+            config = self.config_handler.deserialize_config(data)
+            self.set_config(config)
+            self.log("Read configuration from NFC tag")
         except Exception as e:
             self.log(f"Read NFC error: {e}", level="ERROR")
 
     def write_nfc_config(self):
         """Write current configuration to NFC tag."""
         try:
-            self.log("Writing configuration to NFC tag")
-            raise NotImplementedError("NFC write not yet implemented")
+            config = self.get_config()
+            data = self.config_handler.serialize_config(config)
+            self.nfc.write_config(data)
+            self.log("Wrote configuration to NFC tag")
         except Exception as e:
             self.log(f"Write NFC error: {e}", level="ERROR")
 

@@ -21,15 +21,15 @@ class NFCHandler:
         """Connect to the ACR1252U reader and load default key."""
         if not self.reader:
             self.logger.error("Cannot connect: No NFC reader detected")
-            raise Exception('No NFC reader detected')
+            raise Exception("No NFC reader detected")
         self.connection = self.reader.createConnection()
         self.connection.connect()
         # Load default Key A (0xFF FF FF FF FF FF) into key slot 0
         command = [0xFF, 0x82, 0x00, 0x00, 0x06, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
         response, sw1, sw2 = self.connection.transmit(command)
         if sw1 != 0x90 or sw2 != 0x00:
-            self.logger.error(f"Failed to load authentication keys: SW1={sw1}, SW2={sw2}")
-            raise Exception(f'Failed to load authentication keys: SW1={sw1}, SW2={sw2}')
+            self.logger.error(f"Failed to load authentication keys: SW1={sw1:02X}, SW2={sw2:02X}")
+            raise Exception(f"Failed to load authentication keys: SW1={sw1:02X}, SW2={sw2:02X}")
         self.logger.info("Connected to reader and loaded authentication keys")
         return True
 
@@ -37,54 +37,73 @@ class NFCHandler:
         """Authenticate the sector containing the block using Key A."""
         if not self.connection:
             self.logger.error("Cannot authenticate: Not connected to reader")
-            raise Exception('Not connected to reader')
-        sector = block // 4  # MIFARE Classic 1K: 4 blocks per sector
+            raise Exception("Not connected to reader")
+        sector = block // 4
         if self.authenticated_sector != sector:
-            # Authenticate sector with Key A (key slot 0)
             command = [0xFF, 0x86, 0x00, 0x00, 0x05, 0x01, 0x00, block, 0x60, 0x00]
             response, sw1, sw2 = self.connection.transmit(command)
             if sw1 != 0x90 or sw2 != 0x00:
-                self.logger.error(f"Authentication failed for sector {sector}: SW1={sw1}, SW2={sw2}")
-                raise Exception(f'Authentication failed for sector {sector}: SW1={sw1}, SW2={sw2}')
+                self.logger.error(f"Authentication failed for sector {sector} (block {block}): SW1={sw1:02X}, SW2={sw2:02X}")
+                raise Exception(f"Authentication failed for sector {sector}: SW1={sw1:02X}, SW2={sw2:02X}")
             self.authenticated_sector = sector
             self.logger.info(f"Authenticated sector {sector} for block {block}")
 
-    def write_block(self, block, data):
-        """Write 16 bytes to a MIFARE Classic 1K block (4-63, avoiding sector trailers)."""
+    def write_config(self, data):
+        """Write configuration data across multiple blocks (4-6, 8-10, ..., 60-62)."""
         if not self.connection:
             self.logger.error("Cannot write: Not connected to reader")
-            raise Exception('Not connected to reader')
-        if not 4 <= block <= 63 or (block % 4) == 3:
-            self.logger.error(f"Invalid block {block}: Must be 4-63, excluding sector trailers")
-            raise ValueError('Block must be between 4 and 63, excluding sector trailers')
-        if len(data) != 16:
-            self.logger.error(f"Invalid data length: {len(data)} bytes, expected 16")
-            raise ValueError('Data must be exactly 16 bytes')
-        self.authenticate_block(block)
-        command = [0xFF, 0xD6, 0x00, block, 0x10] + list(data)
-        response, sw1, sw2 = self.connection.transmit(command)
-        if sw1 == 0x90 and sw2 == 0x00:
-            self.logger.info(f"Wrote to block {block}: {data}")
-            return True
-        self.logger.error(f"Write failed for block {block}: SW1={sw1}, SW2={sw2}")
-        raise Exception(f'Write failed: SW1={sw1}, SW2={sw2}')
+            raise Exception("Not connected to reader")
+        if len(data) > 832:  # 52 blocks * 16 bytes (sectors 1-15)
+            self.logger.error(f"Data too large: {len(data)} bytes, max 832")
+            raise ValueError("Data exceeds 832 bytes")
+        
+        # List of usable blocks, excluding sector trailers, starting from sector 1
+        usable_blocks = []
+        for sector in range(1, 16):  # Sectors 1-15
+            for block_offset in range(3):  # Blocks 0, 1, 2 in each sector
+                block = sector * 4 + block_offset
+                usable_blocks.append(block)
+        
+        if len(data) > len(usable_blocks) * 16:
+            self.logger.error(f"Data too large: {len(data)} bytes, max {len(usable_blocks) * 16}")
+            raise ValueError("Data exceeds available block capacity")
+        
+        for i in range(0, len(data), 16):
+            block_index = i // 16
+            if block_index >= len(usable_blocks):
+                self.logger.error(f"Insufficient blocks for data: {len(data)} bytes")
+                raise ValueError("Insufficient blocks for data")
+            block = usable_blocks[block_index]
+            self.authenticate_block(block)
+            block_data = data[i:i+16]
+            if len(block_data) < 16:
+                block_data += b"\x00" * (16 - len(block_data))
+            command = [0xFF, 0xD6, 0x00, block, 0x10] + list(block_data)
+            response, sw1, sw2 = self.connection.transmit(command)
+            if sw1 != 0x90 or sw2 != 0x00:
+                self.logger.error(f"Write failed for block {block}: SW1={sw1:02X}, SW2={sw2:02X}")
+                raise Exception(f"Write failed for block {block}: SW1={sw1:02X}, SW2={sw2:02X}")
+            self.logger.info(f"Wrote to block {block}: {block_data}")
+        self.logger.info(f"Configuration written to blocks {usable_blocks[0]}-{usable_blocks[block_index]}")
 
-    def read_block(self, block):
-        """Read 16 bytes from a MIFARE Classic 1K block (4-63, avoiding sector trailers)."""
+    def read_config(self):
+        """Read configuration data from blocks (4-6, 8-10, ..., 60-62)."""
         if not self.connection:
             self.logger.error("Cannot read: Not connected to reader")
-            raise Exception('Not connected to reader')
-        if not 4 <= block <= 63 or (block % 4) == 3:
-            self.logger.error(f"Invalid block {block}: Must be 4-63, excluding sector trailers")
-            raise ValueError('Block must be between 4 and 63, excluding sector trailers')
-        self.authenticate_block(block)
-        command = [0xFF, 0xB0, 0x00, block, 0x10]
-        data, sw1, sw2 = self.connection.transmit(command)
-        if sw1 == 0x90 and sw2 == 0x00:
-            self.logger.info(f"Read from block {block}: {data}")
-            return data
-        self.logger.error(f"Read failed for block {block}: SW1={sw1}, SW2={sw2}")
-        raise Exception(f'Read failed: SW1={sw1}, SW2={sw2}')
+            raise Exception("Not connected to reader")
+        data = b""
+        for sector in range(1, 16):  # Sectors 1-15
+            for block_offset in range(3):  # Blocks 0, 1, 2 in each sector
+                block = sector * 4 + block_offset
+                self.authenticate_block(block)
+                command = [0xFF, 0xB0, 0x00, block, 0x10]
+                block_data, sw1, sw2 = self.connection.transmit(command)
+                if sw1 != 0x90 or sw2 != 0x00:
+                    self.logger.error(f"Read failed for block {block}: SW1={sw1:02X}, SW2={sw2:02X}")
+                    raise Exception(f"Read failed for block {block}: SW1={sw1:02X}, SW2={sw2:02X}")
+                data += bytes(block_data)
+                self.logger.info(f"Read from block {block}: {block_data}")
+        return data.rstrip(b"\x00")  # Remove padding
 
     def disconnect(self):
         """Disconnect from the reader."""
