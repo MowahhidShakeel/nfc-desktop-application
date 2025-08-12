@@ -5,9 +5,9 @@ from PyQt6.QtCore import Qt
 class ImportTab(QWidget):
     def __init__(self, parent):
         super().__init__()
-        self.parent = parent  # Reference to NFCWindow for backend calls
+        self.parent = parent
         layout = QVBoxLayout()
-        layout.setSpacing(10)
+        layout.setSpacing(5)  # Reduced spacing
 
         # Title
         title = QLabel("Import Configuration")
@@ -25,7 +25,7 @@ class ImportTab(QWidget):
         # Drag and drop area
         self.drop_area = QLabel("Drag and drop your JSON")
         self.drop_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.drop_area.setStyleSheet("border: 2px dashed #CCCCCC; border-radius: 4px; padding: 20px; background-color: #F8F8F8;")
+        self.drop_area.setStyleSheet("border: 2px dashed #CCCCCC; border-radius: 4px; padding: 10px; background-color: #F8F8F8;")
         self.drop_area.setAcceptDrops(True)
         layout.addWidget(self.drop_area)
 
@@ -83,14 +83,11 @@ class ImportTab(QWidget):
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
-            event.accept()
-        else:
-            event.ignore()
+            event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent):
         files = [u.toLocalFile() for u in event.mimeData().urls()]
         if files and files[0].endswith('.json'):
-            # Call parent import_json with the dropped file
             self.parent.import_json(files[0])
         else:
             self.parent.log("Invalid file dropped. Please drop a JSON file.", level="ERROR")

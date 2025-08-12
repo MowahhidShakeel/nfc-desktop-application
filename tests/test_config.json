@@ -1,0 +1,30 @@
+{
+  "wifi": {
+    "ssid": "TestNetwork",
+    "password": "testpass123",
+    "enterpriseMode": 255,
+    "enterpriseIdentity": "",
+    "enterpriseUsername": ""
+  },
+  "mqtt": {
+    "host": "mqtt.example.com",
+    "hostType": "hostname",
+    "port": 1883,
+    "username": "mqttuser",
+    "password": "mqttpass"
+  },
+  "ip": {
+    "dhcpEnabled": true,
+    "ipAddress": "",
+    "netmask": 24,
+    "gateway": "",
+    "dns1": "",
+    "dns2": "",
+    "dns3": ""
+  },
+  "sntp": {
+    "server1": { "value": "0.pool.ntp.org", "type": "hostname" },
+    "server2": { "value": "1.pool.ntp.org", "type": "hostname" },
+    "server3": { "value": "2.pool.ntp.org", "type": "hostname" }
+  }
+}
