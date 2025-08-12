@@ -37,6 +37,7 @@ class ImportTab(QWidget):
         # Start New Configuration button
         new_button = QPushButton("Start New Configuration")
         new_button.clicked.connect(self.parent.new_configuration)
+        new_button.clicked.connect(lambda: self.parent.tabs.setCurrentIndex(1))  # Navigate to WiFi tab
         layout.addWidget(new_button)
 
         # Configuration File Format code block
@@ -84,10 +85,13 @@ class ImportTab(QWidget):
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
+        else:
+            event.ignore()
 
     def dropEvent(self, event: QDropEvent):
         files = [u.toLocalFile() for u in event.mimeData().urls()]
-        if files and files[0].endswith('.json'):
-            self.parent.import_json(files[0])
-        else:
-            self.parent.log("Invalid file dropped. Please drop a JSON file.", level="ERROR")
+        for file in files:
+            if file.endswith('.json'):
+                self.parent.import_json(file)
+                return
+        self.parent.log("Invalid file dropped. Please drop a JSON file.", level="ERROR")
