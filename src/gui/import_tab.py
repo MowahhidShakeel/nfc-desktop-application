@@ -55,7 +55,6 @@ class ImportTab(QWidget):
         # Start New Configuration button
         new_button = QPushButton("Start New Configuration")
         new_button.clicked.connect(self.parent.new_configuration)
-<<<<<<< HEAD
         json_layout.addWidget(new_button)
 
         main_layout.addWidget(json_box)
@@ -77,10 +76,6 @@ class ImportTab(QWidget):
         format_description = QLabel("Expected JSON structure for import files")
         format_description.setStyleSheet("color: #999999; font-size: 12px;")
         format_layout.addWidget(format_description)
-=======
-        new_button.clicked.connect(lambda: self.parent.tabs.setCurrentIndex(1))  # Navigate to WiFi tab
-        layout.addWidget(new_button)
->>>>>>> b2accabdeb47cf6901afea5642eb77ee27705df6
 
         format_label = QLabel("Configuration File Format")
         format_layout.addWidget(format_label)
@@ -128,13 +123,10 @@ class ImportTab(QWidget):
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
-        else:
-            event.ignore()
 
     def dropEvent(self, event: QDropEvent):
         files = [u.toLocalFile() for u in event.mimeData().urls()]
-        for file in files:
-            if file.endswith('.json'):
-                self.parent.import_json(file)
-                return
-        self.parent.log("Invalid file dropped. Please drop a JSON file.", level="ERROR")
+        if files and files[0].endswith('.json'):
+            self.parent.import_json(files[0])
+        else:
+            self.parent.log("Invalid file dropped. Please drop a JSON file.", level="ERROR")
