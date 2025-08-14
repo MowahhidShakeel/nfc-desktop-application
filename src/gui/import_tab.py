@@ -1,47 +1,84 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QTextEdit, QFileDialog
-from PyQt6.QtGui import QDragEnterEvent, QDropEvent
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QTextEdit, QFileDialog, QHBoxLayout, QGroupBox
+from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QIcon
 from PyQt6.QtCore import Qt
 
 class ImportTab(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        layout = QVBoxLayout()
-        layout.setSpacing(5)  # Reduced spacing
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(10)
 
         # Title
         title = QLabel("Import Configuration")
         title.setStyleSheet("font-size: 18px; font-weight: bold;")
-        layout.addWidget(title)
+        main_layout.addWidget(title)
 
         # Subtitle
         subtitle = QLabel("Import a network configuration from a JSON file or start with a new one.")
-        layout.addWidget(subtitle)
+        main_layout.addWidget(subtitle)
 
-        # Upload JSON section
-        upload_label = QLabel("Upload JSON Configuration File")
-        layout.addWidget(upload_label)
+        # JSON Configuration File Box
+        json_box = QGroupBox()
+        json_layout = QVBoxLayout()
+        json_box.setLayout(json_layout)
+
+        # Sub-heading with icon
+        heading_layout = QHBoxLayout()
+        icon_label = QLabel()
+        icon_label.setPixmap(QIcon("src/gui/assets/json_icon.png").pixmap(16, 16))  # Replace with actual icon path
+        heading_layout.addWidget(icon_label)
+
+        sub_heading = QLabel("JSON Configuration File")
+        sub_heading.setStyleSheet("font-size: 16px; font-weight: bold; color: #000000;")
+        heading_layout.addWidget(sub_heading)
+        heading_layout.addStretch()
+        json_layout.addLayout(heading_layout)
+
+        # Faded/grey text below sub-heading
+        description = QLabel("Select a previously exported configuration file to import settings.")
+        description.setStyleSheet("color: #999999; font-size: 12px;")
+        json_layout.addWidget(description)
 
         # Drag and drop area
         self.drop_area = QLabel("Drag and drop your JSON")
         self.drop_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.drop_area.setStyleSheet("border: 2px dashed #CCCCCC; border-radius: 4px; padding: 10px; background-color: #F8F8F8;")
         self.drop_area.setAcceptDrops(True)
-        layout.addWidget(self.drop_area)
+        json_layout.addWidget(self.drop_area)
 
-        # Choose File button
-        choose_button = QPushButton("Choose File")
-        choose_button.clicked.connect(self.parent.import_json)
-        layout.addWidget(choose_button)
+        # Import & Continue button
+        import_button = QPushButton("Import && Continue")
+        import_button.clicked.connect(self.parent.import_json)
+        json_layout.addWidget(import_button)
 
         # Start New Configuration button
         new_button = QPushButton("Start New Configuration")
         new_button.clicked.connect(self.parent.new_configuration)
-        layout.addWidget(new_button)
+        json_layout.addWidget(new_button)
 
-        # Configuration File Format code block
+        main_layout.addWidget(json_box)
+
+        # Configuration File Format Box
+        format_box = QGroupBox()
+        format_layout = QVBoxLayout()
+        format_box.setLayout(format_layout)
+
+        # Sub-heading with icon
+        format_heading_layout = QHBoxLayout()
+        format_sub_heading = QLabel("Configuration File Format")
+        format_sub_heading.setStyleSheet("font-size: 16px; font-weight: bold; color: #000000;")
+        format_heading_layout.addWidget(format_sub_heading)
+        format_heading_layout.addStretch()
+        format_layout.addLayout(format_heading_layout)
+
+        # Faded/grey text below sub-heading
+        format_description = QLabel("Expected JSON structure for import files")
+        format_description.setStyleSheet("color: #999999; font-size: 12px;")
+        format_layout.addWidget(format_description)
+
         format_label = QLabel("Configuration File Format")
-        layout.addWidget(format_label)
+        format_layout.addWidget(format_label)
 
         format_code = QTextEdit()
         format_code.setReadOnly(True)
@@ -77,9 +114,11 @@ class ImportTab(QWidget):
             "  }\n}"
         )
         format_code.setStyleSheet("background-color: #F0F0F0; font-family: monospace; font-size: 12px;")
-        layout.addWidget(format_code)
+        format_layout.addWidget(format_code)
 
-        self.setLayout(layout)
+        main_layout.addWidget(format_box)
+
+        self.setLayout(main_layout)
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():

@@ -29,10 +29,6 @@ class NFCWindow(QMainWindow):
         # Create main layout
         main_layout = QVBoxLayout()
 
-        # Status label
-        self.status_label = QLabel("No reader detected")
-        main_layout.addWidget(self.status_label)
-
         # Tab widget
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs)
@@ -108,8 +104,12 @@ class NFCWindow(QMainWindow):
                     config = json.load(f)
                 self.set_config(config)
                 self.log(f"Imported JSON from {file_name}")
+
+                self.tabs.setCurrentWidget(self.wifi_tab) # Navigate to "Wi-Fi tab"
+                
         except Exception as e:
             self.log(f"Import error: {e}", level="ERROR")
+        
 
     def export_json(self):
         """Export current configuration to a JSON file."""
@@ -151,6 +151,9 @@ class NFCWindow(QMainWindow):
             self.sntp_tab.server2_type.setText("hostname")
             self.sntp_tab.server3_value.setText("2.pool.ntp.org")
             self.sntp_tab.server3_type.setText("hostname")
+
+            self.tabs.setCurrentWidget(self.wifi_tab) # Navigate to "Wi-Fi tab"
+
             self.log("New configuration created")
             self.update_summary()
         except Exception as e:

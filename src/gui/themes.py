@@ -79,4 +79,12 @@ QTextBrowser {
     margin-top: 2px;
     color: #000000;
 }
+
+QGroupBox {
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    background-color: #F8F8F8;
+    margin-top: 10px;
+    padding: 10px;
+}
 """
