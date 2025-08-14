@@ -1,6 +1,7 @@
 from smartcard.System import readers
 from smartcard.pcsc.PCSCExceptions import EstablishContextException
 from src.core.logging_config import setup_logger
+from src.core.config_handler import ConfigHandler
 
 class NFCHandler:
     def __init__(self):
@@ -16,6 +17,8 @@ class NFCHandler:
             self.logger.error(f"Failed to establish context: {e}")
         self.connection = None
         self.authenticated_sector = None
+
+        self.config_handler = ConfigHandler()
 
     def connect(self):
         """Connect to the ACR1252U reader and load default key."""

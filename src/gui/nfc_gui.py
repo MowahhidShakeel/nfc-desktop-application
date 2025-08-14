@@ -1,5 +1,9 @@
-from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QWidget, QLabel, QTabWidget, QFileDialog, QTextEdit
+from PyQt6.QtWidgets import (
+    QMainWindow, QApplication, QVBoxLayout, QWidget, QLabel,
+    QTabWidget, QFileDialog, QSplitter, QPushButton, QTextEdit
+)
 from PyQt6.QtGui import QIcon
+from functools import partial
 from src.gui.import_tab import ImportTab
 from src.gui.wifi_tab import WifiTab
 from src.gui.mqtt_tab import MqttTab
@@ -14,6 +18,25 @@ from src.gui.themes import STYLESHEET
 import sys
 import json
 
+SIDEBAR_BTN_STYLE = """
+    QPushButton {
+        background-color: #f7f7f7;
+        color: #333;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 14px;
+        text-align: left;
+    }
+    QPushButton:hover {
+        background-color: #e6e6e6;
+    }
+    QPushButton:checked {
+        background-color: #4285F4;
+        color: white;
+        font-weight: bold;
+    }
+"""
+
 class NFCWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -21,19 +44,54 @@ class NFCWindow(QMainWindow):
         self.setGeometry(100, 100, 600, 900)
         self.setStyleSheet(STYLESHEET)
 
-        # Initialize logger and NFC handler
         self.logger = setup_logger()
         self.nfc = NFCHandler()
         self.is_connected = False
 
-        # Create main layout
-        main_layout = QVBoxLayout()
+        splitter = QSplitter()
+        splitter.setHandleWidth(1)
+        self.setCentralWidget(splitter)
 
+        # Sidebar
+        sidebar_widget = QWidget()
+        sidebar_layout = QVBoxLayout()
+        sidebar_layout.setSpacing(5)
+        sidebar_widget.setLayout(sidebar_layout)
+        sidebar_widget.setMaximumWidth(150)
+
+        tab_names = [
+            "Import", "WiFi", "MQTT", "IP", "SNTP", "Summary", "Write Tags", "Read Tags"
+        ]
+        self.sidebar_buttons = []
+        for i, name in enumerate(tab_names):
+            btn = QPushButton(name)
+            btn.setCheckable(True)
+            btn.setStyleSheet(SIDEBAR_BTN_STYLE)
+            btn.clicked.connect(partial(self.change_tab, i))
+            sidebar_layout.addWidget(btn)
+            self.sidebar_buttons.append(btn)
+        self.sidebar_buttons[0].setChecked(True)  # First tab active
+
+        splitter.addWidget(sidebar_widget)
+
+        # Main content
+        main_widget = QWidget()
+        main_layout = QVBoxLayout()
+        main_widget.setLayout(main_layout)
+        splitter.addWidget(main_widget)
+
+<<<<<<< HEAD
         # Tab widget
+=======
+        self.status_label = QLabel("No reader detected")
+        main_layout.addWidget(self.status_label)
+
+>>>>>>> b2accabdeb47cf6901afea5642eb77ee27705df6
         self.tabs = QTabWidget()
+        self.tabs.setTabPosition(QTabWidget.TabPosition.North)
+        self.tabs.tabBar().setVisible(False)
         main_layout.addWidget(self.tabs)
 
-        # All tabs
         self.import_tab = ImportTab(self)
         self.tabs.addTab(self.import_tab, "Import")
 
@@ -58,22 +116,20 @@ class NFCWindow(QMainWindow):
         self.read_tags_tab = ReadTagsTab(self)
         self.tabs.addTab(self.read_tags_tab, "Read Tags")
 
-        # Log area
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
         main_layout.addWidget(self.log_area)
 
-        # Set up central widget
-        container = QWidget()
-        container.setLayout(main_layout)
-        self.setCentralWidget(container)
-
-        # Initial check for reader
         if self.nfc.reader is None:
             self.log("No NFC reader detected or Smart Card service not running", level="ERROR")
 
+    def change_tab(self, index):
+        """Switch to tab and update sidebar highlight."""
+        self.tabs.setCurrentIndex(index)
+        for i, btn in enumerate(self.sidebar_buttons):
+            btn.setChecked(i == index)
+
     def log(self, message, level="INFO"):
-        """Append message to the log area and file."""
         self.log_area.append(message)
         if level == "INFO":
             self.logger.info(message)
@@ -81,19 +137,18 @@ class NFCWindow(QMainWindow):
             self.logger.error(message)
 
     def connect_reader(self):
-        """Connect to the NFC reader."""
         try:
             if self.nfc.connect():
                 self.is_connected = True
                 self.status_label.setText("Connected to reader")
                 self.log("Connected to reader")
-                self.write_tags_tab.connect_button.setEnabled(False)
+                self.write_tags_tab.connection_label.setText("Connected")
+                self.read_tags_tab.connection_label.setText("Connected")
         except Exception as e:
             self.status_label.setText("Connection failed")
             self.log(f"Error: {e}", level="ERROR")
 
     def import_json(self, file_name=None):
-        """Import network configuration from a JSON file."""
         try:
             if not file_name:
                 file_name, _ = QFileDialog.getOpenFileName(
@@ -112,7 +167,6 @@ class NFCWindow(QMainWindow):
         
 
     def export_json(self):
-        """Export current configuration to a JSON file."""
         try:
             file_name, _ = QFileDialog.getSaveFileName(
                 self, "Export JSON Config", "", "JSON Files (*.json)"
@@ -126,7 +180,6 @@ class NFCWindow(QMainWindow):
             self.log(f"Export error: {e}", level="ERROR")
 
     def new_configuration(self):
-        """Clear form for a new configuration."""
         try:
             self.wifi_tab.ssid.clear()
             self.wifi_tab.password.clear()
@@ -156,11 +209,11 @@ class NFCWindow(QMainWindow):
 
             self.log("New configuration created")
             self.update_summary()
+            self.change_tab(1)
         except Exception as e:
             self.log(f"New config error: {e}", level="ERROR")
 
     def read_nfc_config(self):
-        """Read network configuration from NFC tag."""
         try:
             data = self.nfc.read_config()
             config = self.nfc.config_handler.deserialize_config(data)
@@ -170,7 +223,6 @@ class NFCWindow(QMainWindow):
             self.log(f"Read NFC error: {e}", level="ERROR")
 
     def write_nfc_config(self):
-        """Write current configuration to NFC tag."""
         try:
             config = self.get_config()
             data = self.nfc.config_handler.serialize_config(config)
@@ -180,8 +232,7 @@ class NFCWindow(QMainWindow):
             self.log(f"Write NFC error: {e}", level="ERROR")
 
     def get_config(self):
-        """Get configuration from GUI fields."""
-        config = {
+        return {
             "wifi": {
                 "ssid": self.wifi_tab.ssid.text(),
                 "password": self.wifi_tab.password.text(),
@@ -211,10 +262,8 @@ class NFCWindow(QMainWindow):
                 "server3": {"value": self.sntp_tab.server3_value.text(), "type": self.sntp_tab.server3_type.text()}
             }
         }
-        return config
 
     def set_config(self, config):
-        """Set GUI fields from configuration."""
         try:
             self.wifi_tab.ssid.setText(config.get("wifi", {}).get("ssid", ""))
             self.wifi_tab.password.setText(config.get("wifi", {}).get("password", ""))
@@ -244,7 +293,6 @@ class NFCWindow(QMainWindow):
             self.log(f"Error setting config: {e}", level="ERROR")
 
     def update_summary(self):
-        """Update the Summary tab with current configuration."""
         summary_text = (
             "WiFi Configuration:\n"
             f"  SSID: {self.wifi_tab.ssid.text()}\n"
@@ -277,7 +325,6 @@ class NFCWindow(QMainWindow):
         self.summary_tab.summary_display.setPlainText(summary_text)
 
     def closeEvent(self, event):
-        """Handle window close event to disconnect reader."""
         if self.is_connected:
             self.nfc.disconnect()
             self.log("Disconnected from reader")
