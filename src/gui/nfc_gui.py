@@ -108,7 +108,7 @@ class NFCWindow(QMainWindow):
                 self.set_config(config)
                 self.log(f"Imported JSON from {file_name}")
 
-                self.tabs.setCurrentWidget(self.wifi_tab) # Navigate to "Wi-Fi tab"
+                self.tabs.setCurrentWidget(self.wifi_tab)
         except Exception as e:
             self.log(f"Import error: {e}", level="ERROR")
         
@@ -130,29 +130,29 @@ class NFCWindow(QMainWindow):
     def new_configuration(self):
         """Clear form for a new configuration."""
         try:
-            self.wifi_tab.ssid.clear()
-            self.wifi_tab.password.clear()
-            self.wifi_tab.enterprise_mode.setValue(255)
-            self.wifi_tab.enterprise_identity.clear()
-            self.wifi_tab.enterprise_username.clear()
-            self.mqtt_tab.host.clear()
-            self.mqtt_tab.host_type.setText("hostname")
-            self.mqtt_tab.port.setValue(1883)
-            self.mqtt_tab.username.clear()
-            self.mqtt_tab.password.clear()
-            self.ip_tab.dhcp_toggle.setChecked(True)
-            self.ip_tab.ip_address.clear()
-            self.ip_tab.netmask.setValue(24)
-            self.ip_tab.gateway.clear()
-            self.ip_tab.dns1.clear()
-            self.ip_tab.dns2.clear()
-            self.ip_tab.dns3.clear()
-            self.sntp_tab.server1_value.setText("0.pool.ntp.org")
-            self.sntp_tab.server1_type.setText("hostname")
-            self.sntp_tab.server2_value.setText("1.pool.ntp.org")
-            self.sntp_tab.server2_type.setText("hostname")
-            self.sntp_tab.server3_value.setText("2.pool.ntp.org")
-            self.sntp_tab.server3_type.setText("hostname")
+            # self.wifi_tab.ssid.clear()
+            # self.wifi_tab.password.clear()
+            # self.wifi_tab.enterprise_mode.setValue(255)
+            # self.wifi_tab.enterprise_identity.clear()
+            # self.wifi_tab.enterprise_username.clear()
+            # self.mqtt_tab.host.clear()
+            # self.mqtt_tab.host_type.setText("hostname")
+            # self.mqtt_tab.port.setValue(1883)
+            # self.mqtt_tab.username.clear()
+            # self.mqtt_tab.password.clear()
+            # self.ip_tab.dhcp_toggle.setChecked(True)
+            # self.ip_tab.ip_address.clear()
+            # self.ip_tab.netmask.setValue(24)
+            # self.ip_tab.gateway.clear()
+            # self.ip_tab.dns1.clear()
+            # self.ip_tab.dns2.clear()
+            # self.ip_tab.dns3.clear()
+            # self.sntp_tab.server1_value.setText("0.pool.ntp.org")
+            # self.sntp_tab.server1_type.setText("hostname")
+            # self.sntp_tab.server2_value.setText("1.pool.ntp.org")
+            # self.sntp_tab.server2_type.setText("hostname")
+            # self.sntp_tab.server3_value.setText("2.pool.ntp.org")
+            # self.sntp_tab.server3_type.setText("hostname")
 
             self.tabs.setCurrentWidget(self.wifi_tab) # Navigate to "Wi-Fi tab"
 
@@ -213,34 +213,50 @@ class NFCWindow(QMainWindow):
         return config
 
     def set_config(self, config):
-        """Set GUI fields from configuration."""
-        try:
-            self.wifi_tab.ssid.setText(config.get("wifi", {}).get("ssid", ""))
-            self.wifi_tab.password.setText(config.get("wifi", {}).get("password", ""))
-            self.wifi_tab.enterprise_mode.setValue(config.get("wifi", {}).get("enterpriseMode", 255))
-            self.wifi_tab.enterprise_identity.setText(config.get("wifi", {}).get("enterpriseIdentity", ""))
-            self.wifi_tab.enterprise_username.setText(config.get("wifi", {}).get("enterpriseUsername", ""))
-            self.mqtt_tab.host.setText(config.get("mqtt", {}).get("host", ""))
-            self.mqtt_tab.host_type.setText(config.get("mqtt", {}).get("hostType", "hostname"))
-            self.mqtt_tab.port.setValue(config.get("mqtt", {}).get("port", 1883))
-            self.mqtt_tab.username.setText(config.get("mqtt", {}).get("username", ""))
-            self.mqtt_tab.password.setText(config.get("mqtt", {}).get("password", ""))
-            self.ip_tab.dhcp_toggle.setChecked(config.get("ip", {}).get("dhcpEnabled", True))
-            self.ip_tab.ip_address.setText(config.get("ip", {}).get("ipAddress", ""))
-            self.ip_tab.netmask.setValue(config.get("ip", {}).get("netmask", 24))
-            self.ip_tab.gateway.setText(config.get("ip", {}).get("gateway", ""))
-            self.ip_tab.dns1.setText(config.get("ip", {}).get("dns1", ""))
-            self.ip_tab.dns2.setText(config.get("ip", {}).get("dns2", ""))
-            self.ip_tab.dns3.setText(config.get("ip", {}).get("dns3", ""))
-            self.sntp_tab.server1_value.setText(config.get("sntp", {}).get("server1", {}).get("value", "0.pool.ntp.org"))
-            self.sntp_tab.server1_type.setText(config.get("sntp", {}).get("server1", {}).get("type", "hostname"))
-            self.sntp_tab.server2_value.setText(config.get("sntp", {}).get("server2", {}).get("value", "1.pool.ntp.org"))
-            self.sntp_tab.server2_type.setText(config.get("sntp", {}).get("server2", {}).get("type", "hostname"))
-            self.sntp_tab.server3_value.setText(config.get("sntp", {}).get("server3", {}).get("value", "2.pool.ntp.org"))
-            self.sntp_tab.server3_type.setText(config.get("sntp", {}).get("server3", {}).get("type", "hostname"))
-            self.update_summary()
-        except Exception as e:
-            self.log(f"Error setting config: {e}", level="ERROR")
+        """Set configuration to GUI fields from a dict."""
+
+        # ==== WIFI ====
+        self.wifi_tab.ssid.setText(config["wifi"].get("ssid", ""))
+        self.wifi_tab.password.setText(config["wifi"].get("password", ""))
+
+        # If enterpriseMode is stored as index:
+        if isinstance(config["wifi"].get("enterpriseMode"), int):
+            self.wifi_tab.enterprise_mode.setCurrentIndex(config["wifi"]["enterpriseMode"])
+        else:  # If stored as text
+            self.wifi_tab.enterprise_mode.setCurrentText(config["wifi"].get("enterpriseMode", ""))
+
+        self.wifi_tab.enterprise_identity.setText(config["wifi"].get("enterpriseIdentity", ""))
+        self.wifi_tab.enterprise_username.setText(config["wifi"].get("enterpriseUsername", ""))
+
+        # ==== MQTT ====
+        self.mqtt_tab.host.setText(config["mqtt"].get("host", ""))
+        self.mqtt_tab.port.setValue(config["mqtt"].get("port", 1883))
+        self.mqtt_tab.username.setText(config["mqtt"].get("username", ""))
+        self.mqtt_tab.password.setText(config["mqtt"].get("password", ""))
+
+        # ==== IP ====
+        self.ip_tab.dhcp_toggle.setChecked(config["ip"].get("dhcpEnabled", True))
+        self.ip_tab.static_ip.setText(config["ip"].get("ipAddress", ""))
+        self.ip_tab.netmask.setText(str(config["ip"].get("netmask", "")))  # QLineEdit needs string
+        self.ip_tab.gateway.setText(config["ip"].get("gateway", ""))
+        self.ip_tab.dns1.setText(config["ip"].get("dns1", ""))
+        if hasattr(self.ip_tab, "dns2"):
+            self.ip_tab.dns2.setText(config["ip"].get("dns2", ""))
+        if hasattr(self.ip_tab, "dns3"):
+            self.ip_tab.dns3.setText(config["ip"].get("dns3", ""))
+
+        # ==== SNTP ====
+        self.sntp_tab.primary_server.setText(config["sntp"]["server1"].get("value", ""))
+        self.sntp_tab.secondary_server.setText(config["sntp"]["server2"].get("value", ""))
+        self.sntp_tab.tertiary_server.setText(config["sntp"]["server3"].get("value", ""))
+
+        # If you also store `type`, set those widgets if they exist
+        if hasattr(self.sntp_tab, "server1_type"):
+            self.sntp_tab.server1_type.setText(config["sntp"]["server1"].get("type", ""))
+        if hasattr(self.sntp_tab, "server2_type"):
+            self.sntp_tab.server2_type.setText(config["sntp"]["server2"].get("type", ""))
+        if hasattr(self.sntp_tab, "server3_type"):
+            self.sntp_tab.server3_type.setText(config["sntp"]["server3"].get("type", ""))
 
     def update_summary(self):
         """Update the Summary tab labels from the current configuration."""
