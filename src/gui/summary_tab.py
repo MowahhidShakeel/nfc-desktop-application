@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QPushButton
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import Qt
 
 class SummaryTab(QWidget):
@@ -70,12 +70,12 @@ class SummaryTab(QWidget):
         mqtt_heading_layout.addStretch()
         mqtt_layout.addLayout(mqtt_heading_layout)
 
-        mqtt_desc = QLabel("Host, Host Type, Username, Password")
+        mqtt_desc = QLabel("Host, Host Port, Username, Password")
         mqtt_desc.setStyleSheet("color: #999999; font-size: 12px;")
         mqtt_layout.addWidget(mqtt_desc)
 
         self.mqtt_host = QLabel("Host: Not set")
-        self.mqtt_host_type = QLabel("Host Type: Not set")
+        self.mqtt_host_type = QLabel("Host Port: Not set")
         self.mqtt_username = QLabel("Username: Not set")
         self.mqtt_password = QLabel("Password: Not set")
         mqtt_layout.addWidget(self.mqtt_host)
@@ -159,10 +159,39 @@ class SummaryTab(QWidget):
         right_column.addWidget(sntp_box)
 
         grid_layout.addLayout(right_column)
-        # self.parent.update_summary
         sntp_layout.addStretch(1) 
 
         main_layout.addLayout(grid_layout)
+
+        # Export JSON
+        self.json_group = self.create_group_box(
+            "Configuration Settings",
+            "Save your configuration as a JSON file for future use.",
+            "src/gui/assets/broker_icon.png"
+        )
+
+        json_layout = self.json_group.layout()
+        
+        # Add Export as JSON button
+        export_button = QPushButton("Export as JSON")
+        export_button.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                color: black;
+                padding: 4px 8px;  /* smaller padding for smaller size */
+                border: 1px solid black;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: grey;
+            }
+        """)
+
+        # Connect to export function (to be implemented by parent)
+        export_button.clicked.connect(lambda: parent.export_json())
+        json_layout.addWidget(export_button)
+        
+        main_layout.addWidget(self.json_group)
 
         # Navigation buttons
         button_layout = QHBoxLayout()
@@ -193,7 +222,6 @@ class SummaryTab(QWidget):
                 background-color: #333333;
             }
         """)
-        # next_button.clicked.connect(self.validate_inputs)
 
         button_layout.addWidget(prev_button, alignment=Qt.AlignmentFlag.AlignLeft)
         button_layout.addStretch()
@@ -202,3 +230,42 @@ class SummaryTab(QWidget):
         main_layout.addLayout(button_layout)
  
         self.setLayout(main_layout)
+
+
+        # === Helper UI Methods ===
+    def create_group_box(self, title, subtitle, icon_path):
+        group_box = QGroupBox()
+        group_box.setStyleSheet("""
+            QGroupBox {
+                border: 1px solid #CCCCCC;
+                border-radius: 4px;
+                margin-top: 10px;
+                padding: 10px;
+            }
+        """)
+        layout = QVBoxLayout()
+        layout.setSpacing(6)
+        layout.setContentsMargins(8, 8, 8, 8)
+
+        header_layout = QHBoxLayout()
+        icon_label = QLabel()
+        pixmap = QPixmap(icon_path)
+        if not pixmap.isNull():
+            icon_label.setPixmap(pixmap.scaled(16, 16, Qt.AspectRatioMode.KeepAspectRatio,
+                                               Qt.TransformationMode.SmoothTransformation))
+        else:
+            icon_label.setFixedSize(16, 16)
+
+        header_label = QLabel(title)
+        header_label.setStyleSheet("font-weight: bold; font-size: 15px; margin: 0;")
+        header_layout.addWidget(icon_label)
+        header_layout.addWidget(header_label)
+        header_layout.addStretch()
+        layout.addLayout(header_layout)
+
+        subtitle_label = QLabel(subtitle)
+        subtitle_label.setStyleSheet("color: grey; font-size: 12px; margin: 0;")
+        layout.addWidget(subtitle_label)
+
+        group_box.setLayout(layout)
+        return group_box

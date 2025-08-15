@@ -142,7 +142,7 @@ class NFCWindow(QMainWindow):
             self.mqtt_tab.port.setValue(1883)
             self.mqtt_tab.username.clear()
             self.mqtt_tab.password.clear()
-            self.ip_tab.dhcp_enabled.setChecked(True)
+            self.ip_tab.dhcp_toggle.setChecked(True)
             self.ip_tab.ip_address.clear()
             self.ip_tab.netmask.setValue(24)
             self.ip_tab.gateway.clear()
@@ -189,30 +189,27 @@ class NFCWindow(QMainWindow):
             "wifi": {
                 "ssid": self.wifi_tab.ssid.text(),
                 "password": self.wifi_tab.password.text(),
-                "enterpriseMode": self.wifi_tab.enterprise_mode.value(),
+                "enterpriseMode": self.wifi_tab.enterprise_mode.currentText(),
                 "enterpriseIdentity": self.wifi_tab.enterprise_identity.text(),
                 "enterpriseUsername": self.wifi_tab.enterprise_username.text()
             },
             "mqtt": {
                 "host": self.mqtt_tab.host.text(),
-                "hostType": self.mqtt_tab.host_type.text(),
                 "port": self.mqtt_tab.port.value(),
                 "username": self.mqtt_tab.username.text(),
                 "password": self.mqtt_tab.password.text()
             },
             "ip": {
-                "dhcpEnabled": self.ip_tab.dhcp_enabled.isChecked(),
-                "ipAddress": self.ip_tab.ip_address.text(),
-                "netmask": self.ip_tab.netmask.value(),
+                "dhcpEnabled": self.ip_tab.dhcp_toggle.isChecked(),
+                "ipAddress": self.ip_tab.static_ip.text(),
+                "netmask": self.ip_tab.netmask.text(),
                 "gateway": self.ip_tab.gateway.text(),
-                "dns1": self.ip_tab.dns1.text(),
-                "dns2": self.ip_tab.dns2.text(),
-                "dns3": self.ip_tab.dns3.text()
+                "dns1": self.ip_tab.dns1.text()
             },
             "sntp": {
-                "server1": {"value": self.sntp_tab.server1_value.text(), "type": self.sntp_tab.server1_type.text()},
-                "server2": {"value": self.sntp_tab.server2_value.text(), "type": self.sntp_tab.server2_type.text()},
-                "server3": {"value": self.sntp_tab.server3_value.text(), "type": self.sntp_tab.server3_type.text()}
+                "server1": {"value": self.sntp_tab.primary_server.text()},
+                "server2": {"value": self.sntp_tab.secondary_server.text()},
+                "server3": {"value": self.sntp_tab.tertiary_server.text()}
             }
         }
         return config
@@ -230,7 +227,7 @@ class NFCWindow(QMainWindow):
             self.mqtt_tab.port.setValue(config.get("mqtt", {}).get("port", 1883))
             self.mqtt_tab.username.setText(config.get("mqtt", {}).get("username", ""))
             self.mqtt_tab.password.setText(config.get("mqtt", {}).get("password", ""))
-            self.ip_tab.dhcp_enabled.setChecked(config.get("ip", {}).get("dhcpEnabled", True))
+            self.ip_tab.dhcp_toggle.setChecked(config.get("ip", {}).get("dhcpEnabled", True))
             self.ip_tab.ip_address.setText(config.get("ip", {}).get("ipAddress", ""))
             self.ip_tab.netmask.setValue(config.get("ip", {}).get("netmask", 24))
             self.ip_tab.gateway.setText(config.get("ip", {}).get("gateway", ""))
@@ -272,11 +269,8 @@ class NFCWindow(QMainWindow):
 
         # --- SNTP ---
         self.summary_tab.sntp_server1.setText(f"Primary Server: {self.sntp_tab.primary_server.text() or 'Not set'}")
-        self.summary_tab.sntp_server1_type.setText(f"Primary Type: {'Default' if not self.sntp_tab.primary_server.text() else 'Custom'}")
         self.summary_tab.sntp_server2.setText(f"Secondary Server: {self.sntp_tab.secondary_server.text() or 'Not set'}")
         self.summary_tab.sntp_server3.setText(f"Tertiary Server: {self.sntp_tab.tertiary_server.text() or 'Not set'}")
-        self.summary_tab.sntp_server3_type.setText(f"Tertiary Type: {'Default' if not self.sntp_tab.tertiary_server.text() else 'Custom'}")
-
 
     def closeEvent(self, event):
         """Handle window close event to disconnect reader."""

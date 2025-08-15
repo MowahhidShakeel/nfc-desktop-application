@@ -36,7 +36,6 @@ class WifiTab(QWidget):
         self.security_type = QComboBox()
         self.security_type.addItems(["WPA2 Personal", "WPA2 Enterprise"])
         self.security_type.currentTextChanged.connect(self.toggle_enterprise_section)
-        self.security_type.currentTextChanged.connect(self.on_security_changed)
         group_layout.addWidget(self.security_type)
 
         # SSID
@@ -70,7 +69,7 @@ class WifiTab(QWidget):
         # Enterprise Mode
         enterprise_layout.addWidget(QLabel("Authentication Mode:"))
         self.enterprise_mode = QComboBox()
-        self.enterprise_mode.addItems(["EAP-TLS", "EAP-PEAP", "EAP-TTLS"])
+        self.enterprise_mode.addItems(["","EAP-TLS", "EAP-PEAP", "EAP-TTLS"])
         enterprise_layout.addWidget(self.enterprise_mode)
 
         # Identity
@@ -178,10 +177,6 @@ class WifiTab(QWidget):
                 border: 1px solid #555555;
             }
         """)
-
-    def on_security_changed(self, value):
-        self.data.wifi_security = value
-        self.toggle_enterprise_section(value)
 
     def toggle_enterprise_section(self, value):
         """Show or hide enterprise section based on security type."""
