@@ -3,11 +3,20 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 
 class SummaryTab(QWidget):
-    def __init__(self, model):
+    def __init__(self, parent):
         super().__init__()
-        self.model = model
+        self.parent = parent
         main_layout = QVBoxLayout()
         main_layout.setSpacing(10)
+
+        # Title 
+        title_label = QLabel("Configuration Summary")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        main_layout.addWidget(title_label)
+
+        subtitle_label = QLabel("Review your network configuration before writing to NFC tags.")
+        subtitle_label.setStyleSheet("color: grey;")
+        main_layout.addWidget(subtitle_label)
 
         # Grid layout for 2x2 blocks
         grid_layout = QHBoxLayout()
@@ -42,6 +51,7 @@ class SummaryTab(QWidget):
         wifi_layout.addWidget(self.wifi_ssid)
         wifi_layout.addWidget(self.wifi_security)
         wifi_layout.addWidget(self.wifi_password)
+        wifi_layout.addStretch(1) 
 
         left_column.addWidget(wifi_box)
 
@@ -52,7 +62,7 @@ class SummaryTab(QWidget):
 
         mqtt_heading_layout = QHBoxLayout()
         mqtt_icon = QLabel()
-        mqtt_icon.setPixmap(QIcon("src/gui/assets/broker_icon.png").pixmap(16, 16))  # Replace with actual icon path
+        mqtt_icon.setPixmap(QIcon("src/gui/assets/broker_icon.png").pixmap(16, 16))
         mqtt_heading_layout.addWidget(mqtt_icon)
         mqtt_sub_heading = QLabel("MQTT Settings")
         mqtt_sub_heading.setStyleSheet("font-size: 16px; font-weight: bold; color: #000000;")
@@ -72,6 +82,7 @@ class SummaryTab(QWidget):
         mqtt_layout.addWidget(self.mqtt_host_type)
         mqtt_layout.addWidget(self.mqtt_username)
         mqtt_layout.addWidget(self.mqtt_password)
+        mqtt_layout.addStretch(1)
 
         left_column.addWidget(mqtt_box)
 
@@ -94,6 +105,7 @@ class SummaryTab(QWidget):
         ip_sub_heading.setStyleSheet("font-size: 16px; font-weight: bold; color: #000000;")
         ip_heading_layout.addWidget(ip_sub_heading)
         ip_heading_layout.addStretch()
+        
         ip_layout.addLayout(ip_heading_layout)
 
         ip_desc = QLabel("DHCP, IP Address, Netmask/CIDR, Gateway, Primary DNS")
@@ -111,6 +123,7 @@ class SummaryTab(QWidget):
         ip_layout.addWidget(self.ip_gateway)
         ip_layout.addWidget(self.ip_dns)
 
+        ip_layout.addStretch(1)
         right_column.addWidget(ip_box)
 
         # 2.2 SNTP Settings Box
@@ -146,18 +159,46 @@ class SummaryTab(QWidget):
         right_column.addWidget(sntp_box)
 
         grid_layout.addLayout(right_column)
+        # self.parent.update_summary
+        sntp_layout.addStretch(1) 
+
         main_layout.addLayout(grid_layout)
 
-        # Buttons at the end
+        # Navigation buttons
         button_layout = QHBoxLayout()
-        button_layout.addStretch()
         prev_button = QPushButton("Previous")
-        prev_button.clicked.connect(lambda: self.parent.tabs.setCurrentWidget(self.parent.import_tab))
-        button_layout.addWidget(prev_button)
+        prev_button.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                color: black;
+                border: 1px solid #CCCCCC;
+                padding: 6px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
+        prev_button.clicked.connect(lambda: self.parent.tabs.setCurrentIndex(0))
 
         next_button = QPushButton("Next")
-        next_button.clicked.connect(lambda: self.parent.tabs.setCurrentWidget(self.parent.write_tags_tab))
-        button_layout.addWidget(next_button)
-        main_layout.addLayout(button_layout)
+        next_button.setStyleSheet("""
+            QPushButton {
+                background-color: black;
+                color: white;
+                padding: 6px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #333333;
+            }
+        """)
+        # next_button.clicked.connect(self.validate_inputs)
 
+        button_layout.addWidget(prev_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        button_layout.addStretch()
+        button_layout.addWidget(next_button, alignment=Qt.AlignmentFlag.AlignRight)
+        main_layout.addStretch(1) 
+        main_layout.addLayout(button_layout)
+ 
         self.setLayout(main_layout)

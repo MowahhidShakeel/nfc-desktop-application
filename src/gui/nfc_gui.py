@@ -9,7 +9,6 @@ from src.gui.summary_tab import SummaryTab
 from src.gui.write_tags_tab import WriteTagsTab
 from src.gui.read_tags_tab import ReadTagsTab
 from src.core.nfc_handler import NFCHandler
-from src.gui.central_data import FormData
 from src.core.logging_config import setup_logger
 from src.gui.themes import STYLESHEET
 import sys
@@ -19,9 +18,8 @@ class NFCWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("NFC Desktop Application")
-        self.setGeometry(100, 100, 600, 900)
+        self.setGeometry(100, 100, 900, 900)
         self.setStyleSheet(STYLESHEET)
-        self.data = FormData()
 
         # self.start_new_session()
 
@@ -62,6 +60,9 @@ class NFCWindow(QMainWindow):
         self.read_tags_tab = ReadTagsTab(self)
         self.tabs.addTab(self.read_tags_tab, "Read Tags")
 
+        self.tabs.currentChanged.connect(lambda idx: 
+        self.update_summary() if self.tabs.widget(idx) == self.summary_tab else None
+)
         # Log area
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
@@ -247,45 +248,35 @@ class NFCWindow(QMainWindow):
             self.log(f"Error setting config: {e}", level="ERROR")
 
     def update_summary(self):
-        """Update the Summary tab with current configuration."""
-        summary_text = (
-            "WiFi Configuration:\n"
-            f"  SSID: {self.wifi_tab.ssid.text()}\n"
-            f"  Password: {self.wifi_tab.password.text()}\n"
-            f"  Enterprise Mode: {self.wifi_tab.enterprise_mode.value()}\n"
-            f"  Enterprise Identity: {self.wifi_tab.enterprise_identity.text()}\n"
-            f"  Enterprise Username: {self.wifi_tab.enterprise_username.text()}\n\n"
-            "MQTT Configuration:\n"
-            f"  Host: {self.mqtt_tab.host.text()}\n"
-            f"  Host Type: {self.mqtt_tab.host_type.text()}\n"
-            f"  Port: {self.mqtt_tab.port.value()}\n"
-            f"  Username: {self.mqtt_tab.username.text()}\n"
-            f"  Password: {self.mqtt_tab.password.text()}\n\n"
-            "IP Configuration:\n"
-            f"  DHCP Enabled: {self.ip_tab.dhcp_enabled.isChecked()}\n"
-            f"  IP Address: {self.ip_tab.ip_address.text()}\n"
-            f"  Netmask: {self.ip_tab.netmask.value()}\n"
-            f"  Gateway: {self.ip_tab.gateway.text()}\n"
-            f"  DNS 1: {self.ip_tab.dns1.text()}\n"
-            f"  DNS 2: {self.ip_tab.dns2.text()}\n"
-            f"  DNS 3: {self.ip_tab.dns3.text()}\n\n"
-            "SNTP Configuration:\n"
-            f"  Server 1 Value: {self.sntp_tab.server1_value.text()}\n"
-            f"  Server 1 Type: {self.sntp_tab.server1_type.text()}\n"
-            f"  Server 2 Value: {self.sntp_tab.server2_value.text()}\n"
-            f"  Server 2 Type: {self.sntp_tab.server2_type.text()}\n"
-            f"  Server 3 Value: {self.sntp_tab.server3_value.text()}\n"
-            f"  Server 3 Type: {self.sntp_tab.server3_type.text()}"
-        )
-        self.summary_tab.summary_display.setPlainText(summary_text)
+        """Update the Summary tab labels from the current configuration."""
 
-    # def start_new_session(self):
-    #     self.data.reset()
-    #     # All tabs to refresh their UI:
-    #     self.wifi_tab.ssid.setText("")
-    #     self.wifi_tab.password.setText("")
-    #     self.wifi_tab.security_type.setCurrentIndex(0)
-    #     self.summary_tab.update_summary()
+        # --- WiFi ---
+        self.summary_tab.wifi_ssid.setText(f"SSID: {self.wifi_tab.ssid.text() or 'Not set'}")
+        self.summary_tab.wifi_security.setText(f"Security: {self.wifi_tab.security_type.currentText() or 'Not set'}")
+        self.summary_tab.wifi_password.setText(f"Password: {self.wifi_tab.password.text() or 'Not set'}")
+
+        # --- MQTT ---
+        self.summary_tab.mqtt_host.setText(f"Host: {self.mqtt_tab.host.text() or 'Not set'}")
+        self.summary_tab.mqtt_host_type.setText(f"Host Type: {self.mqtt_tab.port.value() or 'Not set'}")
+        self.summary_tab.mqtt_username.setText(f"Username: {self.mqtt_tab.username.text() or 'Not set'}")
+        self.summary_tab.mqtt_password.setText(f"Password: {self.mqtt_tab.password.text() or 'Not set'}")
+
+        # --- IP ---
+        self.summary_tab.ip_dhcp.setText(
+            f"DHCP: {'Enabled' if self.ip_tab.dhcp_toggle.isChecked() else 'Disabled'}"
+        )
+        self.summary_tab.ip_address.setText(f"IP Address: {self.ip_tab.static_ip.text() or 'Not set'}")
+        self.summary_tab.ip_netmask.setText(f"Netmask/CIDR: {self.ip_tab.netmask.text() or 'Not set'}")
+        self.summary_tab.ip_gateway.setText(f"Gateway: {self.ip_tab.gateway.text() or 'Not set'}")
+        self.summary_tab.ip_dns.setText(f"Primary DNS: {self.ip_tab.dns1.text() or 'Not set'}")
+
+        # --- SNTP ---
+        self.summary_tab.sntp_server1.setText(f"Primary Server: {self.sntp_tab.primary_server.text() or 'Not set'}")
+        self.summary_tab.sntp_server1_type.setText(f"Primary Type: {'Default' if not self.sntp_tab.primary_server.text() else 'Custom'}")
+        self.summary_tab.sntp_server2.setText(f"Secondary Server: {self.sntp_tab.secondary_server.text() or 'Not set'}")
+        self.summary_tab.sntp_server3.setText(f"Tertiary Server: {self.sntp_tab.tertiary_server.text() or 'Not set'}")
+        self.summary_tab.sntp_server3_type.setText(f"Tertiary Type: {'Default' if not self.sntp_tab.tertiary_server.text() else 'Custom'}")
+
 
     def closeEvent(self, event):
         """Handle window close event to disconnect reader."""
