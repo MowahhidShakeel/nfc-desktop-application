@@ -1,81 +1,116 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QProgressBar
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel
+from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
+from smartcard.scard import *
+from smartcard.Exceptions import CardServiceException
 
 class ReadTagsTab(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, nfc_handler):
         super().__init__()
         self.parent = parent
+        self.nfc_handler = nfc_handler
+        self.is_connected = False
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(10)
+
+        # Title
+        title_label = QLabel("Read NFC Tags")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        main_layout.addWidget(title_label)
+
+        subtitle_label = QLabel("Connect your NFC reader to read configuration from Mifare Ultralight tags.")
+        subtitle_label.setStyleSheet("color: grey;")
+        main_layout.addWidget(subtitle_label)
+
+        # NFC Reader Status Box
+        self.reader_box = self.create_group_box(
+            "NFC Reader Status",
+            "Supported readers: ACR122U (USB-A), ACR1252U-M1 (USB-C).",
+            "src/gui/assets/nfc_icon.png"
+        )
+        reader_layout = self.reader_box.layout()
+
+        # Reader Connection Status
+        status_layout = QHBoxLayout()
+        status_label = QLabel("Reader Connection")
+        status_label.setStyleSheet("font-size: 14px; color: #000000;")
+        status_layout.addWidget(status_label)
+
+        self.connection_status = QLabel("Disconnected")
+        self.connection_status.setStyleSheet("""
+            QLabel {
+                font-size: 12px;
+                color: #ff6666;
+                border: 1px solid #ff6666;
+                border-radius: 10px;
+                padding: 2px 8px;
+            }
+        """)
+        status_layout.addStretch()
+        status_layout.addWidget(self.connection_status, alignment=Qt.AlignmentFlag.AlignRight)
+
+        reader_layout.addLayout(status_layout)
+
+        # Reader Detection Status
+        self.reader_detected = QLabel("No reader detected")
+        self.reader_detected.setStyleSheet("font-size: 12px; color: #999999;")
+        reader_layout.addWidget(self.reader_detected)
+        reader_layout.addStretch(1)
+
+        main_layout.addWidget(self.reader_box)
+        main_layout.addStretch(1)
+
+        self.setLayout(main_layout)
+
+        # Attempt to connect to NFC reader
+        self.update_connection_status()
+
+    def create_group_box(self, title, description, icon_path):
+        group_box = QGroupBox()
         layout = QVBoxLayout()
-        layout.setSpacing(10)
+        group_box.setLayout(layout)
 
-        # Title and Subtitle
-        title = QLabel("Read NFC Tags")
-        title.setStyleSheet("font-size: 18px; font-weight: bold;")
-        layout.addWidget(title)
-        subtitle = QLabel("Connect your NFC reader and read the configuration from MIFARE Ultralight tags.")
-        layout.addWidget(subtitle)
+        heading_layout = QHBoxLayout()
+        icon = QLabel()
+        icon.setPixmap(QIcon(icon_path).pixmap(16, 16))
+        heading_layout.addWidget(icon)
+        sub_heading = QLabel(title)
+        sub_heading.setStyleSheet("font-size: 16px; font-weight: bold; color: #000000;")
+        heading_layout.addWidget(sub_heading)
+        heading_layout.addStretch()
+        layout.addLayout(heading_layout)
 
-        # NFC Reader Status
-        status_label = QLabel("NFC Reader Status")
-        layout.addWidget(status_label)
+        desc = QLabel(description)
+        desc.setStyleSheet("color: #999999; font-size: 12px;")
+        layout.addWidget(desc)
 
-        # Supported readers
-        supported = QLabel("Supported readers: ACR122U (USB-A), ACR1252U-M1 (USB-C)")
-        layout.addWidget(supported)
+        return group_box
 
-        # Reader Connection
-        self.connection_label = QLabel("Reader Connection")
-        self.connection_label.setStyleSheet("background-color: #00FF00; border-radius: 4px; padding: 5px; color: #333333;")
-        self.connection_label.setText("Connected")
-        layout.addWidget(self.connection_label)
-
-        # Note
-        note = QLabel("Make sure your NFC reader is properly connected via USB before proceeding.")
-        layout.addWidget(note)
-
-        # Configuration Data (placeholder for read, can be similar to write)
-        data_label = QLabel("Configuration Data")
-        layout.addWidget(data_label)
-
-        # Data Size and Tags Required
-        data_size = QLabel("Data Size: 420 Bytes")
-        tags_required = QLabel("Tags Required: 3 Tags")
-        layout.addWidget(data_size)
-        layout.addWidget(tags_required)
-
-        # Note
-        note2 = QLabel("The configuration is stored across 3 NFC tags with continuation flags.")
-        layout.addWidget(note2)
-
-        # Memory Usage Bars (placeholder, update with read data)
-        tag1_bar = QProgressBar()
-        tag1_bar.setValue(100)
-        tag1_bar.setFormat("Tag 1 Memory Usage: 144 / 144 Bytes")
-        layout.addWidget(tag1_bar)
-
-        tag2_bar = QProgressBar()
-        tag2_bar.setValue(100)
-        tag2_bar.setFormat("Tag 2 Memory Usage: 144 / 144 Bytes")
-        layout.addWidget(tag2_bar)
-
-        tag3_bar = QProgressBar()
-        tag3_bar.setValue(90)
-        tag3_bar.setFormat("Tag 3 Memory Usage: 132 / 144 Bytes")
-        layout.addWidget(tag3_bar)
-
-        # Note
-        note3 = QLabel("Data is distributed across 3 tags. Tag 1 and 2 are filled completely. Tag 3 contains the remaining 132 bytes.")
-        layout.addWidget(note3)
-
-        # Back and Start Reading buttons
-        button_layout = QVBoxLayout()
-        back_button = QPushButton("Back to Summary")
-        back_button.clicked.connect(lambda: self.parent.tabs.setCurrentIndex(5))
-        button_layout.addWidget(back_button)
-
-        start_button = QPushButton("Start Reading")
-        start_button.clicked.connect(self.parent.read_nfc_config)
-        button_layout.addWidget(start_button)
-
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
+    def update_connection_status(self):
+        try:
+            self.nfc_handler.connect()
+            self.is_connected = True
+            self.connection_status.setText("Connected")
+            self.connection_status.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    color: #66cc66;
+                    border: 1px solid #66cc66;
+                    border-radius: 10px;
+                    padding: 2px 8px;
+                }
+            """)
+            self.reader_detected.setText(f"{str(self.nfc_handler.reader)} detected")
+        except (CardServiceException, Exception) as e:
+            self.is_connected = False
+            self.connection_status.setText("Disconnected")
+            self.connection_status.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    color: #ff6666;
+                    border: 1px solid #ff6666;
+                    border-radius: 10px;
+                    padding: 2px 8px;
+                }
+            """)
+            self.reader_detected.setText("No reader detected")

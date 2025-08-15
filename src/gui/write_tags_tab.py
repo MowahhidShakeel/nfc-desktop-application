@@ -1,129 +1,116 @@
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton, QProgressBar, QFrame
-)
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel
+from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
-import math
+from smartcard.scard import *
+from smartcard.Exceptions import CardServiceException
 
 class WriteTagsTab(QWidget):
-    TAG_CAPACITY = 144  # bytes for MIFARE Ultralight C
-
-    def __init__(self, parent):
+    def __init__(self, parent, nfc_handler):
         super().__init__()
         self.parent = parent
-        self.progress_bars = []
+        self.nfc_handler = nfc_handler
+        self.is_connected = False
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(10)
 
-        layout = QVBoxLayout()
-        layout.setSpacing(10)
+        # Title
+        title_label = QLabel("Write NFC Tags")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        main_layout.addWidget(title_label)
 
-        # Title and Subtitle
-        title = QLabel("Write NFC Tags")
-        title.setStyleSheet("font-size: 18px; font-weight: bold;")
-        layout.addWidget(title)
+        subtitle_label = QLabel("Connect your NFC reader and write the configuration to Mifare Ultralight tags.")
+        subtitle_label.setStyleSheet("color: grey;")
+        main_layout.addWidget(subtitle_label)
 
-        subtitle = QLabel("Connect your NFC reader and write the configuration to MIFARE Ultralight tags.")
-        layout.addWidget(subtitle)
+        # NFC Reader Status Box
+        self.reader_box = self.create_group_box(
+            "NFC Reader Status",
+            "Supported readers: ACR122U (USB-A), ACR1252U-M1 (USB-C).",
+            "src/gui/assets/nfc_icon.png"
+        )
+        reader_layout = self.reader_box.layout()
 
-        # NFC Reader Status Section
-        status_frame = QFrame()
-        status_layout = QVBoxLayout(status_frame)
-        status_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        status_frame.setFrameShadow(QFrame.Shadow.Raised)
-
-        status_label = QLabel("NFC Reader Status")
+        # Reader Connection Status
+        status_layout = QHBoxLayout()
+        status_label = QLabel("Reader Connection")
+        status_label.setStyleSheet("font-size: 14px; color: #000000;")
         status_layout.addWidget(status_label)
 
-        supported = QLabel("Supported readers: ACR122U (USB-A), ACR1252U-M1 (USB-C)")
-        status_layout.addWidget(supported)
+        self.connection_status = QLabel("Disconnected")
+        self.connection_status.setStyleSheet("""
+            QLabel {
+                font-size: 12px;
+                color: #ff6666;
+                border: 1px solid #ff6666;
+                border-radius: 10px;
+                padding: 2px 8px;
+            }
+        """)
+        status_layout.addStretch()
+        status_layout.addWidget(self.connection_status, alignment=Qt.AlignmentFlag.AlignRight)
 
-        self.connection_label = QLabel("Reader Connection: Not Connected")
-        self.connection_label.setStyleSheet(
-            "background-color: #FF4C4C; border-radius: 4px; padding: 5px; color: white;"
-        )
-        status_layout.addWidget(self.connection_label)
+        reader_layout.addLayout(status_layout)
 
-        note = QLabel("Make sure your NFC reader is properly connected via USB before proceeding.")
-        status_layout.addWidget(note)
+        # Reader Detection Status
+        self.reader_detected = QLabel("No reader detected")
+        self.reader_detected.setStyleSheet("font-size: 12px; color: #999999;")
+        reader_layout.addWidget(self.reader_detected)
+        reader_layout.addStretch(1)
 
-        layout.addWidget(status_frame)
+        main_layout.addWidget(self.reader_box)
+        main_layout.addStretch(1)
 
-        # Configuration Data Section
-        config_frame = QFrame()
-        config_layout = QVBoxLayout(config_frame)
-        config_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        config_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.setLayout(main_layout)
 
-        data_label = QLabel("Configuration Data")
-        config_layout.addWidget(data_label)
+        # Attempt to connect to NFC reader
+        self.update_connection_status()
 
-        self.data_size_label = QLabel("Data Size: 0 Bytes")
-        self.tags_required_label = QLabel("Tags Required: 0")
-        config_layout.addWidget(self.data_size_label)
-        config_layout.addWidget(self.tags_required_label)
+    def create_group_box(self, title, description, icon_path):
+        group_box = QGroupBox()
+        layout = QVBoxLayout()
+        group_box.setLayout(layout)
 
-        self.note2 = QLabel("")
-        config_layout.addWidget(self.note2)
+        heading_layout = QHBoxLayout()
+        icon = QLabel()
+        icon.setPixmap(QIcon(icon_path).pixmap(16, 16))
+        heading_layout.addWidget(icon)
+        sub_heading = QLabel(title)
+        sub_heading.setStyleSheet("font-size: 16px; font-weight: bold; color: #000000;")
+        heading_layout.addWidget(sub_heading)
+        heading_layout.addStretch()
+        layout.addLayout(heading_layout)
 
-        layout.addWidget(config_frame)
+        desc = QLabel(description)
+        desc.setStyleSheet("color: #999999; font-size: 12px;")
+        layout.addWidget(desc)
 
-        # Progress Bars Section
-        self.progress_section = QVBoxLayout()
-        layout.addLayout(self.progress_section)
+        return group_box
 
-        # Navigation buttons
-        back_button = QPushButton("Back to Summary")
-        back_button.clicked.connect(lambda: self.parent.tabs.setCurrentIndex(5))
-        layout.addWidget(back_button)
-
-        start_button = QPushButton("Start Writing")
-        start_button.clicked.connect(self.parent.write_nfc_config)
-        layout.addWidget(start_button)
-
-        self.setLayout(layout)
-
-        # Try auto-connect reader
-        self.auto_connect_reader()
-
-    def auto_connect_reader(self):
-        """Automatically try to connect to NFC reader."""
+    def update_connection_status(self):
         try:
-            if self.parent.nfc.connect():
-                self.connection_label.setText("Reader Connection: Connected")
-                self.connection_label.setStyleSheet(
-                    "background-color: #4CAF50; border-radius: 4px; padding: 5px; color: white;"
-                )
-                self.parent.is_connected = True
-            else:
-                self.connection_label.setText("Reader Connection: Not Connected")
-        except Exception as e:
-            self.connection_label.setText(f"Reader Connection: Failed ({e})")
-
-    def update_config_data(self, data_size):
-        """Update UI with calculated tags and progress bars."""
-        self.data_size_label.setText(f"Data Size: {data_size} Bytes")
-
-        tags_required = math.ceil(data_size / self.TAG_CAPACITY)
-        self.tags_required_label.setText(f"Tags Required: {tags_required} Tag(s)")
-        self.note2.setText(
-            f"Your configuration requires {tags_required} NFC tag(s). "
-            "Data will be split across multiple tags using continuation flags."
-        )
-
-        # Clear old progress bars
-        for bar in self.progress_bars:
-            self.progress_section.removeWidget(bar)
-            bar.deleteLater()
-        self.progress_bars.clear()
-
-        # Add progress bars
-        for tag_index in range(tags_required):
-            bar = QProgressBar()
-            if tag_index < tags_required - 1:
-                bar.setValue(100)
-                bar.setFormat(f"Tag {tag_index+1} Memory Usage: {self.TAG_CAPACITY} / {self.TAG_CAPACITY} Bytes")
-            else:
-                last_tag_bytes = data_size % self.TAG_CAPACITY or self.TAG_CAPACITY
-                percent_fill = int((last_tag_bytes / self.TAG_CAPACITY) * 100)
-                bar.setValue(percent_fill)
-                bar.setFormat(f"Tag {tag_index+1} Memory Usage: {last_tag_bytes} / {self.TAG_CAPACITY} Bytes")
-            self.progress_section.addWidget(bar)
-            self.progress_bars.append(bar)
+            self.nfc_handler.connect()
+            self.is_connected = True
+            self.connection_status.setText("Connected")
+            self.connection_status.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    color: #66cc66;
+                    border: 1px solid #66cc66;
+                    border-radius: 10px;
+                    padding: 2px 8px;
+                }
+            """)
+            self.reader_detected.setText(f"{str(self.nfc_handler.reader)} detected")
+        except (CardServiceException, Exception) as e:
+            self.is_connected = False
+            self.connection_status.setText("Disconnected")
+            self.connection_status.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    color: #ff6666;
+                    border: 1px solid #ff6666;
+                    border-radius: 10px;
+                    padding: 2px 8px;
+                }
+            """)
+            self.reader_detected.setText("No reader detected")

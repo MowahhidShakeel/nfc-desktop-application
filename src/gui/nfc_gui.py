@@ -21,8 +21,6 @@ class NFCWindow(QMainWindow):
         self.setGeometry(100, 100, 900, 900)
         self.setStyleSheet(STYLESHEET)
 
-        # self.start_new_session()
-
         # Initialize logger and NFC handler
         self.logger = setup_logger()
         self.nfc = NFCHandler()
@@ -54,10 +52,10 @@ class NFCWindow(QMainWindow):
         self.summary_tab = SummaryTab(self)
         self.tabs.addTab(self.summary_tab, "Summary")
 
-        self.write_tags_tab = WriteTagsTab(self)
+        self.write_tags_tab = WriteTagsTab(self, self.nfc)
         self.tabs.addTab(self.write_tags_tab, "Write Tags")
 
-        self.read_tags_tab = ReadTagsTab(self)
+        self.read_tags_tab = ReadTagsTab(self, self.nfc)
         self.tabs.addTab(self.read_tags_tab, "Read Tags")
 
         self.tabs.currentChanged.connect(lambda idx: 
