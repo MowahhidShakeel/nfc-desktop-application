@@ -305,8 +305,10 @@ class IpTab(QWidget):
                 """)
                 self.parent.log(f"IP Tab Validation Error: {field_name} is invalid or missing", level="ERROR")
 
+
             QMessageBox.warning(self, "Validation Error", "Please fix all errors before proceeding.")
             return
+
 
         self.parent.log("IP configuration validated successfully.")
         self.parent.tabs.setCurrentIndex(4)
