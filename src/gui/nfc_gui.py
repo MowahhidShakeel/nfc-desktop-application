@@ -9,6 +9,7 @@ from src.gui.summary_tab import SummaryTab
 from src.gui.write_tags_tab import WriteTagsTab
 from src.gui.read_tags_tab import ReadTagsTab
 from src.core.nfc_handler import NFCHandler
+from src.gui.central_data import FormData
 from src.core.logging_config import setup_logger
 from src.gui.themes import STYLESHEET
 import sys
@@ -20,6 +21,9 @@ class NFCWindow(QMainWindow):
         self.setWindowTitle("NFC Desktop Application")
         self.setGeometry(100, 100, 600, 900)
         self.setStyleSheet(STYLESHEET)
+        self.data = FormData()
+
+        # self.start_new_session()
 
         # Initialize logger and NFC handler
         self.logger = setup_logger()
@@ -274,6 +278,14 @@ class NFCWindow(QMainWindow):
             f"  Server 3 Type: {self.sntp_tab.server3_type.text()}"
         )
         self.summary_tab.summary_display.setPlainText(summary_text)
+
+    # def start_new_session(self):
+    #     self.data.reset()
+    #     # All tabs to refresh their UI:
+    #     self.wifi_tab.ssid.setText("")
+    #     self.wifi_tab.password.setText("")
+    #     self.wifi_tab.security_type.setCurrentIndex(0)
+    #     self.summary_tab.update_summary()
 
     def closeEvent(self, event):
         """Handle window close event to disconnect reader."""

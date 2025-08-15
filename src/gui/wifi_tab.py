@@ -9,6 +9,7 @@ class WifiTab(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.data = parent.data
 
         main_layout = QVBoxLayout()
         main_layout.setSpacing(10)
@@ -36,6 +37,7 @@ class WifiTab(QWidget):
         self.security_type = QComboBox()
         self.security_type.addItems(["WPA2 Personal", "WPA2 Enterprise"])
         self.security_type.currentTextChanged.connect(self.toggle_enterprise_section)
+        self.security_type.currentTextChanged.connect(self.on_security_changed)
         group_layout.addWidget(self.security_type)
 
         # SSID
@@ -55,6 +57,9 @@ class WifiTab(QWidget):
         self.set_field_style(self.password)
         group_layout.addWidget(self.password)
 
+        self.ssid.textChanged.connect(lambda t: setattr(self.data, "wifi_ssid", t))
+        self.password.textChanged.connect(lambda t: setattr(self.data, "wifi_password", t))
+        
         main_layout.addWidget(self.network_group)
 
         # === Enterprise Settings Group (Hidden initially) ===
@@ -178,6 +183,10 @@ class WifiTab(QWidget):
             }
         """)
 
+    def on_security_changed(self, value):
+        self.data.wifi_security = value
+        self.toggle_enterprise_section(value)
+
     def toggle_enterprise_section(self, value):
         """Show or hide enterprise section based on security type."""
         self.enterprise_group.setVisible(value == "WPA2 Enterprise")
@@ -235,6 +244,10 @@ class WifiTab(QWidget):
             msg.exec()
             return
 
+        # Save final validated values
+        self.data.wifi_ssid = self.ssid.text().strip()
+        self.data.wifi_password = self.password.text().strip()
+        self.data.wifi_security = self.security_type.currentText()
 
         # If everything is valid, go to next tab
         self.parent.tabs.setCurrentIndex(2)
