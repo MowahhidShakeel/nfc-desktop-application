@@ -1,117 +1,103 @@
+# pip install pyscard pycryptodome
 from smartcard.System import readers
-from smartcard.pcsc.PCSCExceptions import EstablishContextException
-from src.core.logging_config import setup_logger
-from src.core.config_handler import ConfigHandler
+from smartcard.util import toHexString
+from Crypto.Cipher import DES3
+from Crypto.Random import get_random_bytes
 
-class NFCHandler:
-    def __init__(self):
-        self.logger = setup_logger()
-        try:
-            self.reader = readers()[0] if readers() else None
-            if self.reader:
-                self.logger.info(f"Reader detected: {str(self.reader)}")
-            else:
-                self.logger.error("No NFC reader detected")
-        except EstablishContextException as e:
-            self.reader = None
-            self.logger.error(f"Failed to establish context: {e}")
-        self.connection = None
-        self.authenticated_sector = None
+# -------------------- PC/SC + ACR122U helpers --------------------
+def tx_direct_transmit(conn, payload_bytes):
+    # ACS Direct Transmit: FF 00 00 00 Lc | <PN532 payload>
+    apdu = [0xFF, 0x00, 0x00, 0x00, len(payload_bytes)] + payload_bytes
+    data, sw1, sw2 = conn.transmit(apdu)
+    if (sw1, sw2) != (0x90, 0x00):
+        raise RuntimeError(f"Reader error SW={sw1:02X}{sw2:02X}; APDU was {toHexString(apdu)}")
+    # Expect PN532 response: D5 41 00 ... (InDataExchange OK)
+    if len(data) < 3 or data[0:3] != [0xD5, 0x41, 0x00]:
+        raise RuntimeError(f"PN532 error/NAK: {toHexString(data)}")
+    return data[3:]  # strip D5 41 00
 
-        self.config_handler = ConfigHandler()
+def pn532_exchange(conn, native_cmd):
+    # Wrap native Ultralight command with PN532 InDataExchange (D4 40 01)
+    return tx_direct_transmit(conn, [0xD4, 0x40, 0x01] + native_cmd)
 
-    def connect(self):
-        """Connect to the ACR1252U reader and load default key."""
-        if not self.reader:
-            self.logger.error("Cannot connect: No NFC reader detected")
-            raise Exception("No NFC reader detected")
-        self.connection = self.reader.createConnection()
-        self.connection.connect()
-        # Load default Key A (0xFF FF FF FF FF FF) into key slot 0
-        command = [0xFF, 0x82, 0x00, 0x00, 0x06, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
-        response, sw1, sw2 = self.connection.transmit(command)
-        if sw1 != 0x90 or sw2 != 0x00:
-            self.logger.error(f"Failed to load authentication keys: SW1={sw1:02X}, SW2={sw2:02X}")
-            raise Exception(f"Failed to load authentication keys: SW1={sw1:02X}, SW2={sw2:02X}")
-        self.logger.info("Connected to reader and loaded authentication keys")
-        return True
+def get_uid(conn):
+    # ACR122U GET DATA (UID)
+    data, sw1, sw2 = conn.transmit([0xFF, 0xCA, 0x00, 0x00, 0x00])
+    if (sw1, sw2) != (0x90, 0x00):
+        raise RuntimeError("Failed to get UID")
+    return bytes(data)
 
-    def authenticate_block(self, block):
-        """Authenticate the sector containing the block using Key A."""
-        if not self.connection:
-            self.logger.error("Cannot authenticate: Not connected to reader")
-            raise Exception("Not connected to reader")
-        sector = block // 4
-        if self.authenticated_sector != sector:
-            command = [0xFF, 0x86, 0x00, 0x00, 0x05, 0x01, 0x00, block, 0x60, 0x00]
-            response, sw1, sw2 = self.connection.transmit(command)
-            if sw1 != 0x90 or sw2 != 0x00:
-                self.logger.error(f"Authentication failed for sector {sector} (block {block}): SW1={sw1:02X}, SW2={sw2:02X}")
-                raise Exception(f"Authentication failed for sector {sector}: SW1={sw1:02X}, SW2={sw2:02X}")
-            self.authenticated_sector = sector
-            self.logger.info(f"Authenticated sector {sector} for block {block}")
+# -------------------- Ultralight C native ops --------------------
+def ulc_read_16bytes(conn, start_page):
+    # READ (0x30) returns 4 pages (16 bytes) starting at start_page
+    resp = pn532_exchange(conn, [0x30, start_page & 0xFF])
+    return bytes(resp[:16])
 
-    def write_config(self, data):
-        """Write configuration data across multiple blocks (4-6, 8-10, ..., 60-62)."""
-        if not self.connection:
-            self.logger.error("Cannot write: Not connected to reader")
-            raise Exception("Not connected to reader")
-        if len(data) > 832:  # 52 blocks * 16 bytes (sectors 1-15)
-            self.logger.error(f"Data too large: {len(data)} bytes, max 832")
-            raise ValueError("Data exceeds 832 bytes")
-        
-        # List of usable blocks, excluding sector trailers, starting from sector 1
-        usable_blocks = []
-        for sector in range(1, 16):  # Sectors 1-15
-            for block_offset in range(3):  # Blocks 0, 1, 2 in each sector
-                block = sector * 4 + block_offset
-                usable_blocks.append(block)
-        
-        if len(data) > len(usable_blocks) * 16:
-            self.logger.error(f"Data too large: {len(data)} bytes, max {len(usable_blocks) * 16}")
-            raise ValueError("Data exceeds available block capacity")
-        
-        for i in range(0, len(data), 16):
-            block_index = i // 16
-            if block_index >= len(usable_blocks):
-                self.logger.error(f"Insufficient blocks for data: {len(data)} bytes")
-                raise ValueError("Insufficient blocks for data")
-            block = usable_blocks[block_index]
-            self.authenticate_block(block)
-            block_data = data[i:i+16]
-            if len(block_data) < 16:
-                block_data += b"\x00" * (16 - len(block_data))
-            command = [0xFF, 0xD6, 0x00, block, 0x10] + list(block_data)
-            response, sw1, sw2 = self.connection.transmit(command)
-            if sw1 != 0x90 or sw2 != 0x00:
-                self.logger.error(f"Write failed for block {block}: SW1={sw1:02X}, SW2={sw2:02X}")
-                raise Exception(f"Write failed for block {block}: SW1={sw1:02X}, SW2={sw2:02X}")
-            self.logger.info(f"Wrote to block {block}: {block_data}")
-        self.logger.info(f"Configuration written to blocks {usable_blocks[0]}-{usable_blocks[block_index]}")
+def ulc_write_page(conn, page, four_bytes):
+    assert len(four_bytes) == 4
+    # WRITE (0xA2) writes one page (4 bytes)
+    pn532_exchange(conn, [0xA2, page & 0xFF] + list(four_bytes))
 
-    def read_config(self):
-        """Read configuration data from blocks (4-6, 8-10, ..., 60-62)."""
-        if not self.connection:
-            self.logger.error("Cannot read: Not connected to reader")
-            raise Exception("Not connected to reader")
-        data = b""
-        for sector in range(1, 16):  # Sectors 1-15
-            for block_offset in range(3):  # Blocks 0, 1, 2 in each sector
-                block = sector * 4 + block_offset
-                self.authenticate_block(block)
-                command = [0xFF, 0xB0, 0x00, block, 0x10]
-                block_data, sw1, sw2 = self.connection.transmit(command)
-                if sw1 != 0x90 or sw2 != 0x00:
-                    self.logger.error(f"Read failed for block {block}: SW1={sw1:02X}, SW2={sw2:02X}")
-                    raise Exception(f"Read failed for block {block}: SW1={sw1:02X}, SW2={sw2:02X}")
-                data += bytes(block_data)
-                self.logger.info(f"Read from block {block}: {block_data}")
-        return data.rstrip(b"\x00")  # Remove padding
+# -------------------- 3DES Authentication (Ultralight C) --------------------
+def _des3_ecb_encrypt(key16, block8):
+    # MF0ICU2 uses 16-byte (2-key) 3DES; Double-length key K1||K2, EDE
+    k = DES3.adjust_key_parity(key16 + key16[:8])  # 16->24 for PyCryptodome (K1,K2,K1)
+    cipher = DES3.new(k, DES3.MODE_ECB)
+    return cipher.encrypt(block8)
 
-    def disconnect(self):
-        """Disconnect from the reader."""
-        if self.connection:
-            self.connection.disconnect()
-            self.connection = None
-            self.authenticated_sector = None
-            self.logger.info("Disconnected from reader")
+def _des3_ecb_decrypt(key16, block8):
+    k = DES3.adjust_key_parity(key16 + key16[:8])
+    cipher = DES3.new(k, DES3.MODE_ECB)
+    return cipher.decrypt(block8)
+
+def rotate_left8(b8):
+    return b8[1:] + b8[:1]
+
+def ulc_authenticate_3des(conn, key16):
+    # STEP 1: PCD -> PICC : 1A 00
+    part1 = pn532_exchange(conn, [0x1A, 0x00])
+    if len(part1) < 9 or part1[0] != 0xAF:
+        raise RuntimeError(f"Auth part1 unexpected: {toHexString(list(part1))}")
+    ek_rndB = bytes(part1[1:9])
+    rndB = _des3_ecb_decrypt(key16, ek_rndB)
+
+    # STEP 2: build RndA, RndB' and send AF + ENC(RndA||RndB')
+    rndA = get_random_bytes(8)
+    payload = rndA + rotate_left8(rndB)
+    ek_payload = b''.join(_des3_ecb_encrypt(key16, payload[i:i+8]) for i in range(0, 16, 8))
+    part2 = pn532_exchange(conn, [0xAF] + list(ek_payload))
+
+    # STEP 3: expect 00 + ek(RndA')
+    if len(part2) < 9 or part2[0] != 0x00:
+        raise RuntimeError(f"Auth part2 failed: {toHexString(list(part2))}")
+    ek_rndA_prim = bytes(part2[1:9])
+    rndA_prim = _des3_ecb_decrypt(key16, ek_rndA_prim)
+    if rndA_prim != rotate_left8(rndA):
+        raise RuntimeError("Auth verify failed (RndA' mismatch)")
+    return True  # authenticated
+
+# -------------------- Demo flow --------------------
+def main():
+    r = readers()
+    if not r:
+        raise RuntimeError("No PC/SC readers found")
+    conn = r[0].createConnection()
+    conn.connect()  # tap the card now
+
+    print("Reader:", r[0])
+    print("UID:", get_uid(conn).hex())
+
+    # Example: read pages 4..7 (16 bytes)
+    print("P4..7:", ulc_read_16bytes(conn, 0x04).hex())
+
+    # If tag is in delivery state (AUTH0=0x30), you can write without auth:
+    ulc_write_page(conn, 0x04, b"TEST")  # writes bytes 'T','E','S','T' to page 4
+    print("Wrote page 0x04")
+
+    # If you've configured auth, do this first with your 16-byte key:
+    # key16 = bytes.fromhex("49454D4B41455242214E4143554F5946")  # Example from NXP datasheet
+    # ulc_authenticate_3des(conn, key16)
+    # ulc_write_page(conn, 0x10, b"\x01\x02\x03\x04")
+
+if __name__ == "__main__":
+    main()
