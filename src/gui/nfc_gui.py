@@ -7,6 +7,7 @@ from src.gui.ip_tab import IpTab
 from src.gui.sntp_tab import SntpTab
 from src.gui.summary_tab import SummaryTab
 from src.gui.write_tags_tab import WriteTagsTab
+from src.gui.WriteNfcButton import WriteNfcButton
 from src.gui.read_tags_tab import ReadTagsTab
 from src.core.nfc_handler import NFCHandler
 from src.core.logging_config import setup_logger
@@ -52,7 +53,11 @@ class NFCWindow(QMainWindow):
         self.summary_tab = SummaryTab(self)
         self.tabs.addTab(self.summary_tab, "Summary")
 
-        self.write_tags_tab = WriteTagsTab(self, self.nfc)
+        self.write_tags_tab = WriteNfcButton(
+            self,
+            self.nfc,
+            self.get_config  # you must implement this method to collect data from tabs
+        )
         self.tabs.addTab(self.write_tags_tab, "Write Tags")
 
         self.read_tags_tab = ReadTagsTab(self, self.nfc)
