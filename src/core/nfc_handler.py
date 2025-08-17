@@ -120,7 +120,6 @@ class NFCHandler:
 
             # IP records
             if config.get("ip"):
-                print(config.get("ip"))
                 ip_config = config["ip"]
                 if ip_config.get("ipAddress"):
                     ip = ipaddress.ip_address(ip_config["ipAddress"])
@@ -212,7 +211,6 @@ class NFCHandler:
                     chunk += b'\x00'
                 for i in range(0, max_card_size, 4):
                     page_data = chunk[i:i+4]
-                    print(page_data)
                     self.read_write_nfc(action="write", start_page=4 + (i // 4), data=page_data, key16=key16)
 
         except Exception as e:
@@ -230,7 +228,6 @@ class NFCHandler:
             while True:
                 input("Insert a card and press Enter to continue...")
                 data = self.read_write_nfc(action="read", start_page=4, end_page=39)
-                print(data)
                 # Parse records from this card
                 i = 0
                 while i < len(data):
@@ -267,8 +264,6 @@ class NFCHandler:
                             value = int(value)
                         else:
                             break
-                    else:
-                        break
 
                     all_records.append((key, value))
 
@@ -291,26 +286,50 @@ class NFCHandler:
                 if not more_tags:
                     break
 
-            # Combine all records into config
-            for key, value in all_records:
-                key_id = key & 0x3F
-                if key_id == 0x02: config["wifi"]["ssid"] = value
-                elif key_id == 0x03: config["wifi"]["enterpriseIdentity"] = value
-                elif key_id == 0x04: config["wifi"]["enterpriseUsername"] = value
-                elif key_id == 0x05: config["wifi"]["password"] = value
-                elif key_id == 0x06: config["wifi"]["enterpriseMode"] = {0x00: "EAP-TLS", 0x01: "EAP-PEAP", 0x02: "EAP-TTLS", 0xFF: ""}.get(value, "")
-                elif key_id == 0x10 or key_id == 0x50: config["mqtt"]["host"] = value
-                elif key_id == 0x11: config["mqtt"]["username"] = value
-                elif key_id == 0x12: config["mqtt"]["password"] = value
-                elif key_id == 0x60: config["ip"]["ipAddress"] = value
-                elif key_id == 0xA1: config["ip"]["netmask"] = str(value)
-                elif key_id == 0x62: config["ip"]["gateway"] = value
-                elif key_id == 0x63: config["ip"]["dns1"] = value
-                elif key_id == 0x64: config["ip"]["dns2"] = value
-                elif key_id == 0x65: config["ip"]["dns3"] = value
-                elif key_id == 0x30 or key_id == 0x70: config["sntp"]["server1"] = {"value": value}
-                elif key_id == 0x31 or key_id == 0x71: config["sntp"]["server2"] = {"value": value}
-                elif key_id == 0x32 or key_id == 0x72: config["sntp"]["server3"] = {"value": value}
+                # Combine all records into config with IP aggregation
+                ip_values = {}
+                has_ip_data = False
+                for key, value in all_records:
+                    # Use the Key ID (lower 6 bits) for mapping
+                    key_id = key & 0x3F
+
+                    if key_id == 0x02: config["wifi"]["ssid"] = value
+                    elif key_id == 0x03: config["wifi"]["enterpriseIdentity"] = value
+                    elif key_id == 0x04: config["wifi"]["enterpriseUsername"] = value
+                    elif key_id == 0x05: config["wifi"]["password"] = value
+                    elif key_id == 0x06: config["wifi"]["enterpriseMode"] = {0x00: "EAP-TLS", 0x01: "EAP-PEAP", 0x02: "EAP-TTLS", 0xFF: ""}.get(value, "")
+                    elif key_id == 0x10: config["mqtt"]["host"] = value 
+                    elif key_id == 0x11: config["mqtt"]["username"] = value
+                    elif key_id == 0x12: config["mqtt"]["password"] = value
+                    
+                    # Check against the correct Key IDs from the specification
+                    elif key_id == 0x20: 
+                        ip_values["ipAddress"] = value
+                        has_ip_data = True
+                    elif key_id == 0x21:
+                        ip_values["netmask"] = str(value)
+                        has_ip_data = True 
+                    elif key_id == 0x22:
+                        ip_values["gateway"] = value
+                        has_ip_data = True 
+                    elif key_id == 0x23:
+                        ip_values["dns1"] = value
+                        has_ip_data = True 
+                    elif key_id == 0x24:
+                        ip_values["dns2"] = value
+                        has_ip_data = True 
+                    elif key_id == 0x25: 
+                        ip_values["dns3"] = value
+                        has_ip_data = True 
+                        
+                    elif key_id == 0x30: config["sntp"]["server1"] = {"value": value}
+                    elif key_id == 0x31: config["sntp"]["server2"] = {"value": value}
+                    elif key_id == 0x32: config["sntp"]["server3"] = {"value": value}
+
+                # Update config["ip"] if IP data exists
+                if has_ip_data:
+                    config["ip"] = {"dhcpEnabled": False}
+                    config["ip"].update(ip_values)
 
             return config
 
@@ -325,12 +344,20 @@ if __name__ == "__main__":
     try:
         # Sample test data exceeding 144 bytes
         test_config = {
+            "wifi": {
+                "ssid": "VeryLongSSIDThatExceedsNormalLimits1234567890",
+                "enterpriseIdentity": "user@longdomain.com1234567890",
+                "enterpriseUsername": "user1234567890",
+                "password": "VerySecurePassword1234567890abcde",
+                "enterpriseMode": "EAP-TTLS"
+            },
             "mqtt": {
-                "host": "mqttserver",
-                "username": "mqttuser",
-                "password": "mqttpass"
+                "host": "mqttserver.very.long.domain.name1234567890",
+                "username": "mqttuser1234567890",
+                "password": "mqttpass1234567890"
             },
             "ip": {
+                "dhcpEnabled": False,
                 "ipAddress": "192.168.1.100",
                 "netmask": "24",
                 "gateway": "192.168.1.1",
