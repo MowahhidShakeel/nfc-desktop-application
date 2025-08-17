@@ -15,7 +15,6 @@ class ConfigHandler:
             "mqtt": {
                 "host": str,
                 "hostType": str,
-                "port": int,
                 "username": str,
                 "password": str
             },
@@ -93,8 +92,6 @@ class ConfigHandler:
                                 raise ValueError(f"{section}.{field} exceeds {max_len} characters")
                         if field == "enterpriseMode" and not (0 <= config[section][field] <= 255):
                             raise ValueError("enterpriseMode must be 0-255")
-                        if field == "port" and not (0 <= config[section][field] <= 65535):
-                            raise ValueError("port must be 0-65535")
                         if field == "netmask" and not (0 <= config[section][field] <= 32):
                             raise ValueError("netmask must be 0-32")
             return True

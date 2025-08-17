@@ -112,11 +112,7 @@ class NFCHandler:
             if config.get("mqtt"):
                 mqtt = config["mqtt"]
                 if mqtt.get("host"):
-                    try:
-                        ip = ipaddress.ip_address(mqtt["host"])
-                        records.append((0x50, ip.packed))
-                    except ValueError:
-                        records.append((0x10, mqtt["host"].encode('ascii') + b'\x00'))
+                    records.append((0x10, mqtt["host"].encode('ascii') + b'\x00'))
                 if mqtt.get("username"):
                     records.append((0x11, mqtt["username"].encode('ascii') + b'\x00'))
                 if mqtt.get("password"):
@@ -124,18 +120,25 @@ class NFCHandler:
 
             # IP records
             if config.get("ip"):
+                print(config.get("ip"))
                 ip_config = config["ip"]
-                if not ip_config.get("dhcpEnabled") and ip_config.get("ipAddress"):
+                if ip_config.get("ipAddress"):
                     ip = ipaddress.ip_address(ip_config["ipAddress"])
                     records.append((0x60, ip.packed))
-                if not ip_config.get("dhcpEnabled") and ip_config.get("netmask"):
+                if ip_config.get("netmask"):
                     records.append((0xA1, bytes([int(ip_config["netmask"])])))
-                if not ip_config.get("dhcpEnabled") and ip_config.get("gateway"):
+                if ip_config.get("gateway"):
                     ip = ipaddress.ip_address(ip_config["gateway"])
                     records.append((0x62, ip.packed))
-                if not ip_config.get("dhcpEnabled") and ip_config.get("dns1"):
+                if ip_config.get("dns1"):
                     ip = ipaddress.ip_address(ip_config["dns1"])
                     records.append((0x63, ip.packed))
+                if ip_config.get("dns2"):
+                    ip = ipaddress.ip_address(ip_config["dns2"])
+                    records.append((0x64, ip.packed))
+                if ip_config.get("dns3"):
+                    ip = ipaddress.ip_address(ip_config["dns3"])
+                    records.append((0x65, ip.packed))
 
             # SNTP records
             if config.get("sntp"):
@@ -209,6 +212,7 @@ class NFCHandler:
                     chunk += b'\x00'
                 for i in range(0, max_card_size, 4):
                     page_data = chunk[i:i+4]
+                    print(page_data)
                     self.read_write_nfc(action="write", start_page=4 + (i // 4), data=page_data, key16=key16)
 
         except Exception as e:
@@ -226,7 +230,7 @@ class NFCHandler:
             while True:
                 input("Insert a card and press Enter to continue...")
                 data = self.read_write_nfc(action="read", start_page=4, end_page=39)
-
+                print(data)
                 # Parse records from this card
                 i = 0
                 while i < len(data):
@@ -288,7 +292,6 @@ class NFCHandler:
                     break
 
             # Combine all records into config
-            dhcp_enabled = True
             for key, value in all_records:
                 key_id = key & 0x3F
                 if key_id == 0x02: config["wifi"]["ssid"] = value
@@ -299,19 +302,16 @@ class NFCHandler:
                 elif key_id == 0x10 or key_id == 0x50: config["mqtt"]["host"] = value
                 elif key_id == 0x11: config["mqtt"]["username"] = value
                 elif key_id == 0x12: config["mqtt"]["password"] = value
-                elif key_id == 0x60:  # IPv4 address
-                    config["ip"]["ipAddress"] = value
-                    dhcp_enabled = False
-                elif key_id == 0xA1 and not dhcp_enabled: config["ip"]["netmask"] = str(value)
-                elif key_id == 0x62 and not dhcp_enabled: config["ip"]["gateway"] = value
-                elif key_id == 0x63 and not dhcp_enabled: config["ip"]["dns1"] = value
-                elif key_id == 0x64 and not dhcp_enabled: config["ip"]["dns2"] = value
-                elif key_id == 0x65 and not dhcp_enabled: config["ip"]["dns3"] = value
+                elif key_id == 0x60: config["ip"]["ipAddress"] = value
+                elif key_id == 0xA1: config["ip"]["netmask"] = str(value)
+                elif key_id == 0x62: config["ip"]["gateway"] = value
+                elif key_id == 0x63: config["ip"]["dns1"] = value
+                elif key_id == 0x64: config["ip"]["dns2"] = value
+                elif key_id == 0x65: config["ip"]["dns3"] = value
                 elif key_id == 0x30 or key_id == 0x70: config["sntp"]["server1"] = {"value": value}
                 elif key_id == 0x31 or key_id == 0x71: config["sntp"]["server2"] = {"value": value}
                 elif key_id == 0x32 or key_id == 0x72: config["sntp"]["server3"] = {"value": value}
 
-            config["ip"]["dhcpEnabled"] = dhcp_enabled
             return config
 
         except Exception as e:
@@ -325,24 +325,18 @@ if __name__ == "__main__":
     try:
         # Sample test data exceeding 144 bytes
         test_config = {
-            "wifi": {
-                "ssid": "VeryLongSSIDThatExceedsNormalLimits1234567890",
-                "enterpriseIdentity": "user@longdomain.com1234567890",
-                "enterpriseUsername": "user1234567890",
-                "password": "VerySecurePassword1234567890abcde",
-                "enterpriseMode": "EAP-TTLS"
-            },
             "mqtt": {
-                "host": "mqttserver.very.long.domain.name1234567890",
-                "username": "mqttuser1234567890",
-                "password": "mqttpass1234567890"
+                "host": "mqttserver",
+                "username": "mqttuser",
+                "password": "mqttpass"
             },
             "ip": {
-                "dhcpEnabled": False,
                 "ipAddress": "192.168.1.100",
                 "netmask": "24",
                 "gateway": "192.168.1.1",
-                "dns1": "8.8.8.8"
+                "dns1": "8.8.8.8",
+                "dns2": "8.8.4.4",
+                "dns3": "1.1.1.1"
             },
             "sntp": {
                 "server1": {"value": "time1.very.long.domain.name123"},
