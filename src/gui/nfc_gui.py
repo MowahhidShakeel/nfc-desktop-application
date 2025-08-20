@@ -137,8 +137,6 @@ class NFCWindow(QMainWindow):
             self.wifi_tab.enterprise_identity.clear()
             self.wifi_tab.enterprise_username.clear()
             self.mqtt_tab.host.clear()
-            self.mqtt_tab.host_type.setText("hostname")
-            self.mqtt_tab.port.setValue(1883)
             self.mqtt_tab.username.clear()
             self.mqtt_tab.password.clear()
             self.ip_tab.dhcp_toggle.setChecked(True)
@@ -149,11 +147,8 @@ class NFCWindow(QMainWindow):
             self.ip_tab.dns2.clear()
             self.ip_tab.dns3.clear()
             self.sntp_tab.server1_value.setText("0.pool.ntp.org")
-            self.sntp_tab.server1_type.setText("hostname")
             self.sntp_tab.server2_value.setText("1.pool.ntp.org")
-            self.sntp_tab.server2_type.setText("hostname")
             self.sntp_tab.server3_value.setText("2.pool.ntp.org")
-            self.sntp_tab.server3_type.setText("hostname")
 
             self.tabs.setCurrentWidget(self.wifi_tab)
             self.log("New configuration created")
@@ -235,7 +230,6 @@ class NFCWindow(QMainWindow):
 
         # ==== MQTT ====
         self.mqtt_tab.host.setText(config["mqtt"].get("host", ""))
-        self.mqtt_tab.port.setValue(config["mqtt"].get("port", 1883))
         self.mqtt_tab.username.setText(config["mqtt"].get("username", ""))
         self.mqtt_tab.password.setText(config["mqtt"].get("password", ""))
 
@@ -254,14 +248,6 @@ class NFCWindow(QMainWindow):
         self.sntp_tab.primary_server.setText(config["sntp"]["server1"].get("value", ""))
         self.sntp_tab.secondary_server.setText(config["sntp"]["server2"].get("value", ""))
         self.sntp_tab.tertiary_server.setText(config["sntp"]["server3"].get("value", ""))
-
-        # If you also store `type`, set those widgets if they exist
-        if hasattr(self.sntp_tab, "server1_type"):
-            self.sntp_tab.server1_type.setText(config["sntp"]["server1"].get("type", ""))
-        if hasattr(self.sntp_tab, "server2_type"):
-            self.sntp_tab.server2_type.setText(config["sntp"]["server2"].get("type", ""))
-        if hasattr(self.sntp_tab, "server3_type"):
-            self.sntp_tab.server3_type.setText(config["sntp"]["server3"].get("type", ""))
 
     def update_summary(self):
         """Update the Summary tab labels from the current configuration."""
