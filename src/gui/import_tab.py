@@ -94,7 +94,6 @@ class ImportTab(QWidget):
             "  \"mqtt\": {\n"
             "    \"host\": \"mqtt.example.com\",\n"
             "    \"hostType\": \"hostname\",\n"
-            "    \"port\": 1883,\n"
             "    \"username\": \"mqttuser\",\n"
             "    \"password\": \"mqttpass\"\n"
             "  },\n"
@@ -108,9 +107,9 @@ class ImportTab(QWidget):
             "    \"dns3\": \"\"\n"
             "  },\n"
             "  \"sntp\": {\n"
-            "    \"server1\": { \"value\": \"0.pool.ntp.org\", \"type\": \"hostname\" },\n"
-            "    \"server2\": { \"value\": \"1.pool.ntp.org\", \"type\": \"hostname\" },\n"
-            "    \"server3\": { \"value\": \"2.pool.ntp.org\", \"type\": \"hostname\" }\n"
+            "    \"server1\": { \"value\": \"0.pool.ntp.org\",\n"
+            "    \"server2\": { \"value\": \"1.pool.ntp.org\",\n"
+            "    \"server3\": { \"value\": \"2.pool.ntp.org\"\n"
             "  }\n}"
         )
         format_code.setStyleSheet("background-color: #F0F0F0; font-family: monospace; font-size: 12px;")

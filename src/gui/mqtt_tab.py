@@ -197,7 +197,6 @@ class MqttTab(QWidget):
 
     def clear_error_styles(self):
         self.set_field_style(self.host)
-        self.set_spinbox_style(self.port)
         self.set_field_style(self.username)
         self.set_field_style(self.password)
 
