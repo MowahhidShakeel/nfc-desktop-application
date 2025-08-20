@@ -7,7 +7,6 @@ from src.gui.ip_tab import IpTab
 from src.gui.sntp_tab import SntpTab
 from src.gui.summary_tab import SummaryTab
 from src.gui.write_tags_tab import WriteTagsTab
-from src.gui.WriteNfcButton import WriteNfcButton
 from src.gui.read_tags_tab import ReadTagsTab
 from src.core.nfc_handler import NFCHandler
 from src.core.logging_config import setup_logger
@@ -53,19 +52,16 @@ class NFCWindow(QMainWindow):
         self.summary_tab = SummaryTab(self)
         self.tabs.addTab(self.summary_tab, "Summary")
 
-        self.write_tags_tab = WriteNfcButton(
-            self,
-            self.nfc,
-            self.get_config  # you must implement this method to collect data from tabs
-        )
+        self.write_tags_tab = WriteTagsTab(self, self.nfc)
         self.tabs.addTab(self.write_tags_tab, "Write Tags")
 
         self.read_tags_tab = ReadTagsTab(self, self.nfc)
         self.tabs.addTab(self.read_tags_tab, "Read Tags")
 
         self.tabs.currentChanged.connect(lambda idx: 
-        self.update_summary() if self.tabs.widget(idx) == self.summary_tab else None
-)
+            self.update_summary() if self.tabs.widget(idx) == self.summary_tab else None
+        )
+
         # Log area
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
@@ -91,11 +87,12 @@ class NFCWindow(QMainWindow):
     def connect_reader(self):
         """Connect to the NFC reader."""
         try:
-            if self.nfc.connect():
-                self.is_connected = True
-                self.status_label.setText("Connected to reader")
-                self.log("Connected to reader")
-                self.write_tags_tab.connect_button.setEnabled(False)
+            self.nfc.connect()
+            self.is_connected = True
+            self.status_label.setText("Connected to reader")
+            self.log("Connected to reader")
+            self.write_tags_tab.update_connection_status()  # Update WriteTagsTab status
+            self.read_tags_tab.update_connection_status()   # Update ReadTagsTab status
         except Exception as e:
             self.status_label.setText("Connection failed")
             self.log(f"Error: {e}", level="ERROR")
@@ -116,7 +113,6 @@ class NFCWindow(QMainWindow):
                 self.tabs.setCurrentWidget(self.wifi_tab)
         except Exception as e:
             self.log(f"Import error: {e}", level="ERROR")
-        
 
     def export_json(self):
         """Export current configuration to a JSON file."""
@@ -135,32 +131,31 @@ class NFCWindow(QMainWindow):
     def new_configuration(self):
         """Clear form for a new configuration."""
         try:
-            # self.wifi_tab.ssid.clear()
-            # self.wifi_tab.password.clear()
-            # self.wifi_tab.enterprise_mode.setValue(255)
-            # self.wifi_tab.enterprise_identity.clear()
-            # self.wifi_tab.enterprise_username.clear()
-            # self.mqtt_tab.host.clear()
-            # self.mqtt_tab.host_type.setText("hostname")
-            # self.mqtt_tab.port.setValue(1883)
-            # self.mqtt_tab.username.clear()
-            # self.mqtt_tab.password.clear()
-            # self.ip_tab.dhcp_toggle.setChecked(True)
-            # self.ip_tab.ip_address.clear()
-            # self.ip_tab.netmask.setValue(24)
-            # self.ip_tab.gateway.clear()
-            # self.ip_tab.dns1.clear()
-            # self.ip_tab.dns2.clear()
-            # self.ip_tab.dns3.clear()
-            # self.sntp_tab.server1_value.setText("0.pool.ntp.org")
-            # self.sntp_tab.server1_type.setText("hostname")
-            # self.sntp_tab.server2_value.setText("1.pool.ntp.org")
-            # self.sntp_tab.server2_type.setText("hostname")
-            # self.sntp_tab.server3_value.setText("2.pool.ntp.org")
-            # self.sntp_tab.server3_type.setText("hostname")
+            self.wifi_tab.ssid.clear()
+            self.wifi_tab.password.clear()
+            self.wifi_tab.enterprise_mode.setCurrentIndex(0)
+            self.wifi_tab.enterprise_identity.clear()
+            self.wifi_tab.enterprise_username.clear()
+            self.mqtt_tab.host.clear()
+            self.mqtt_tab.host_type.setText("hostname")
+            self.mqtt_tab.port.setValue(1883)
+            self.mqtt_tab.username.clear()
+            self.mqtt_tab.password.clear()
+            self.ip_tab.dhcp_toggle.setChecked(True)
+            self.ip_tab.ip_address.clear()
+            self.ip_tab.netmask.setValue(24)
+            self.ip_tab.gateway.clear()
+            self.ip_tab.dns1.clear()
+            self.ip_tab.dns2.clear()
+            self.ip_tab.dns3.clear()
+            self.sntp_tab.server1_value.setText("0.pool.ntp.org")
+            self.sntp_tab.server1_type.setText("hostname")
+            self.sntp_tab.server2_value.setText("1.pool.ntp.org")
+            self.sntp_tab.server2_type.setText("hostname")
+            self.sntp_tab.server3_value.setText("2.pool.ntp.org")
+            self.sntp_tab.server3_type.setText("hostname")
 
-            self.tabs.setCurrentWidget(self.wifi_tab) # Navigate to "Wi-Fi tab"
-
+            self.tabs.setCurrentWidget(self.wifi_tab)
             self.log("New configuration created")
             self.update_summary()
         except Exception as e:
@@ -169,19 +164,24 @@ class NFCWindow(QMainWindow):
     def read_nfc_config(self):
         """Read network configuration from NFC tag."""
         try:
-            data = self.nfc.read_config()
-            config = self.nfc.config_handler.deserialize_config(data)
+            if not self.is_connected:
+                self.log("NFC reader not connected", level="ERROR")
+                return
+            config = self.nfc.read_config()
             self.set_config(config)
             self.log("Read configuration from NFC tag")
+            self.tabs.setCurrentWidget(self.summary_tab)
         except Exception as e:
             self.log(f"Read NFC error: {e}", level="ERROR")
 
     def write_nfc_config(self):
         """Write current configuration to NFC tag."""
         try:
+            if not self.is_connected:
+                self.log("NFC reader not connected", level="ERROR")
+                return
             config = self.get_config()
-            data = self.nfc.config_handler.serialize_config(config)
-            self.nfc.write_config(data)
+            self.nfc.write_full_config(config)
             self.log("Wrote configuration to NFC tag")
         except Exception as e:
             self.log(f"Write NFC error: {e}", level="ERROR")
@@ -198,7 +198,6 @@ class NFCWindow(QMainWindow):
             },
             "mqtt": {
                 "host": self.mqtt_tab.host.text(),
-                "port": self.mqtt_tab.port.value(),
                 "username": self.mqtt_tab.username.text(),
                 "password": self.mqtt_tab.password.text()
             },
@@ -207,7 +206,9 @@ class NFCWindow(QMainWindow):
                 "ipAddress": self.ip_tab.static_ip.text(),
                 "netmask": self.ip_tab.netmask.text(),
                 "gateway": self.ip_tab.gateway.text(),
-                "dns1": self.ip_tab.dns1.text()
+                "dns1": self.ip_tab.dns1.text(),
+                "dns2": self.ip_tab.dns2.text(),
+                "dns3": self.ip_tab.dns3.text()
             },
             "sntp": {
                 "server1": {"value": self.sntp_tab.primary_server.text()},
@@ -219,7 +220,6 @@ class NFCWindow(QMainWindow):
 
     def set_config(self, config):
         """Set configuration to GUI fields from a dict."""
-
         # ==== WIFI ====
         self.wifi_tab.ssid.setText(config["wifi"].get("ssid", ""))
         self.wifi_tab.password.setText(config["wifi"].get("password", ""))
@@ -265,7 +265,6 @@ class NFCWindow(QMainWindow):
 
     def update_summary(self):
         """Update the Summary tab labels from the current configuration."""
-
         # --- WiFi ---
         self.summary_tab.wifi_ssid.setText(f"SSID: {self.wifi_tab.ssid.text() or 'Not set'}")
         self.summary_tab.wifi_security.setText(f"Security: {self.wifi_tab.security_type.currentText() or 'Not set'}")
@@ -273,7 +272,6 @@ class NFCWindow(QMainWindow):
 
         # --- MQTT ---
         self.summary_tab.mqtt_host.setText(f"Host: {self.mqtt_tab.host.text() or 'Not set'}")
-        self.summary_tab.mqtt_host_type.setText(f"Host Type: {self.mqtt_tab.port.value() or 'Not set'}")
         self.summary_tab.mqtt_username.setText(f"Username: {self.mqtt_tab.username.text() or 'Not set'}")
         self.summary_tab.mqtt_password.setText(f"Password: {self.mqtt_tab.password.text() or 'Not set'}")
 
@@ -294,7 +292,7 @@ class NFCWindow(QMainWindow):
     def closeEvent(self, event):
         """Handle window close event to disconnect reader."""
         if self.is_connected:
-            self.nfc.disconnect()
+            self.nfc.connection.disconnect()
             self.log("Disconnected from reader")
         event.accept()
 

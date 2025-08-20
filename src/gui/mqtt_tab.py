@@ -14,16 +14,16 @@ class MqttTab(QWidget):
         main_layout = QVBoxLayout()
         main_layout.setSpacing(10)
 
-        # === Title ===
+        #  Title 
         title_label = QLabel("MQTT Configuration")
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 0;")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
         main_layout.addWidget(title_label)
 
         subtitle_label = QLabel("Configure MQTT broker settings for device communication.")
-        subtitle_label.setStyleSheet("color: grey; margin: 0;")
+        subtitle_label.setStyleSheet("color: grey;")
         main_layout.addWidget(subtitle_label)
 
-        # === Broker Settings Group ===
+        #  Broker Settings Group 
         self.broker_group = self.create_group_box(
             "Broker Settings",
             "Enter the MQTT broker hostname or IP address.",
@@ -32,7 +32,7 @@ class MqttTab(QWidget):
         broker_layout = self.broker_group.layout()
 
         # Host
-        broker_layout.addWidget(QLabel("Host *"))
+        broker_layout.addWidget(QLabel("Host"))
         self.host = QLineEdit()
         self.host.setMaxLength(64)
         self.host.setPlaceholderText("mqtt.example.com or 192.168.1.100")
@@ -43,30 +43,18 @@ class MqttTab(QWidget):
         mqtt_label.setStyleSheet("color: grey;")
         broker_layout.addWidget(mqtt_label)
 
-        # Port
-        broker_layout.addWidget(QLabel("Port *"))
-        self.port = QSpinBox()
-        self.port.setRange(1, 65535)
-        self.port.setValue(1883)
-        self.set_spinbox_style(self.port)
-        broker_layout.addWidget(self.port)
-
-        port_label = QLabel("Standard MQTT port is 1883 (unencrypted) or 8883 (SSL/TLS).")
-        port_label.setStyleSheet("color: grey;")
-        broker_layout.addWidget(port_label)
-
         main_layout.addWidget(self.broker_group)
 
-        # === Authentication Group ===
+        # Authentication Group 
         self.auth_group = self.create_group_box(
             "Authentication",
             "Enter authentication details for the MQTT broker.",
-            "src/gui/assets/authentication_icon.png"  # Replace with your actual icon path
+            "src/gui/assets/authentication_icon.png"
         )
         auth_layout = self.auth_group.layout()
 
         # Username
-        auth_layout.addWidget(QLabel("Username *"))
+        auth_layout.addWidget(QLabel("Username"))
         self.username = QLineEdit()
         self.username.setMaxLength(32)
         self.username.setPlaceholderText("Enter MQTT username")
@@ -74,7 +62,7 @@ class MqttTab(QWidget):
         auth_layout.addWidget(self.username)
 
         # Password
-        auth_layout.addWidget(QLabel("Password *"))
+        auth_layout.addWidget(QLabel("Password"))
         self.password = QLineEdit()
         self.password.setMaxLength(32)
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
@@ -84,7 +72,7 @@ class MqttTab(QWidget):
 
         main_layout.addWidget(self.auth_group)
 
-        # === Navigation Buttons ===
+        # Navigation Buttons 
         button_layout = QHBoxLayout()
         prev_button = QPushButton("Previous")
         prev_button.setStyleSheet("""
@@ -124,7 +112,7 @@ class MqttTab(QWidget):
 
         self.setLayout(main_layout)
 
-    # === Helper UI Methods ===
+    # Helper UI Methods
     def create_group_box(self, title, subtitle, icon_path):
         group_box = QGroupBox()
         group_box.setStyleSheet("""
@@ -186,23 +174,12 @@ class MqttTab(QWidget):
             }
         """)
 
-    # === Validation ===
+    # Validation 
     def validate_inputs(self):
         errors = []
         self.clear_error_styles()
 
-        # Host required
-        if not self.host.text().strip():
-            errors.append(("Host *", self.host))
-        # Port required
-        if self.port.value() <= 0:
-            errors.append(("Port *", self.port))
-        # Username required
-        if not self.username.text().strip():
-            errors.append(("Username *", self.username))
-        # Password required
-        if not self.password.text().strip():
-            errors.append(("Password *", self.password))
+        # Add error checks here 
 
         if errors:
             for _, widget in errors:
@@ -216,8 +193,6 @@ class MqttTab(QWidget):
             self.show_error_message("Please fill in all required fields.")
             return
 
-        # Log success and move on
-        self.parent.log("MQTT configuration validated successfully.")
         self.parent.tabs.setCurrentIndex(3)
 
     def clear_error_styles(self):

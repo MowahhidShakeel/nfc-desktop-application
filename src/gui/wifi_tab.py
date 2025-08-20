@@ -19,7 +19,7 @@ class WifiTab(QWidget):
         main_layout.addWidget(title_label)
 
         subtitle_label = QLabel("Configure wireless network settings and authentication.")
-        subtitle_label.setStyleSheet("color: grey; margin: 0;")
+        subtitle_label.setStyleSheet("color: grey;")
         main_layout.addWidget(subtitle_label)
 
         # === Network Settings Group ===
@@ -34,7 +34,7 @@ class WifiTab(QWidget):
         # Security Type
         group_layout.addWidget(QLabel("Security Type"))
         self.security_type = QComboBox()
-        self.security_type.addItems(["WPA2 Personal", "WPA2 Enterprise"])
+        self.security_type.addItems(["", "WPA2 Personal", "WPA2 Enterprise"])
         self.security_type.currentTextChanged.connect(self.toggle_enterprise_section)
         group_layout.addWidget(self.security_type)
 
@@ -47,7 +47,7 @@ class WifiTab(QWidget):
         group_layout.addWidget(self.ssid)
 
         # Password
-        group_layout.addWidget(QLabel("Password *"))
+        group_layout.addWidget(QLabel("Password"))
         self.password = QLineEdit()
         self.password.setMaxLength(64)
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
@@ -80,7 +80,7 @@ class WifiTab(QWidget):
         enterprise_layout.addWidget(self.enterprise_identity)
 
         # Username
-        enterprise_layout.addWidget(QLabel("Username *"))
+        enterprise_layout.addWidget(QLabel("Username"))
         self.enterprise_username = QLineEdit()
         self.set_field_style(self.enterprise_username)
         self.enterprise_username.setPlaceholderText("Enter username")
@@ -187,18 +187,9 @@ class WifiTab(QWidget):
         errors = []
         self.clear_error_styles()
 
-        # SSID & Password always required
+        # SSID always required
         if not self.ssid.text().strip():
             errors.append(("SSID (Network Name) *", self.ssid))
-        if not self.password.text().strip():
-            errors.append(("Password *", self.password))
-
-        # Enterprise-specific validation
-        if self.security_type.currentText() == "WPA2 Enterprise":
-            if not self.enterprise_identity.text().strip():
-                errors.append(("Identity *", self.enterprise_identity))
-            if not self.enterprise_username.text().strip():
-                errors.append(("Username *", self.enterprise_username))
 
         if errors:
             for field_name, widget in errors:
@@ -241,6 +232,3 @@ class WifiTab(QWidget):
     def clear_error_styles(self):
         """Reset all field styles."""
         self.set_field_style(self.ssid)
-        self.set_field_style(self.password)
-        self.set_field_style(self.enterprise_identity)
-        self.set_field_style(self.enterprise_username)

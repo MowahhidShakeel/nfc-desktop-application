@@ -16,6 +16,10 @@ class NFCHandler:
         self.reader = r[reader_index]
         self.connection = self.reader.createConnection()
         self.connection.connect()
+    
+    def disconnect(self):
+        self.connection.disconnect()
+        return
 
     def tx_direct_transmit(self, payload_bytes):
         apdu = [0xFF, 0x00, 0x00, 0x00, len(payload_bytes)] + payload_bytes

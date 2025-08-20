@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QPushButton, QMessageBox
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 from smartcard.scard import *
@@ -58,8 +58,29 @@ class ReadTagsTab(QWidget):
         reader_layout.addStretch(1)
 
         main_layout.addWidget(self.reader_box)
-        main_layout.addStretch(1)
 
+        # Configuration Data Box
+        self.config_box = self.create_group_box(
+            "Configuration Data",
+            "View the network configuration read from the NFC tag.",
+            "src/gui/assets/config_icon.png"
+        )
+        config_layout = self.config_box.layout()
+
+        self.config_status = QLabel("Configuration not loaded")
+        self.config_status.setStyleSheet("font-size: 12px; color: #999999;")
+        config_layout.addWidget(self.config_status)
+        config_layout.addStretch(1)
+
+        main_layout.addWidget(self.config_box)
+
+        # Read Button
+        read_button = QPushButton("Read from NFC Card")
+        read_button.setStyleSheet("font-size: 14px; padding: 5px 15px;")
+        read_button.clicked.connect(self.read_from_card)
+        main_layout.addWidget(read_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        main_layout.addStretch(1)
         self.setLayout(main_layout)
 
         # Attempt to connect to NFC reader
@@ -114,3 +135,37 @@ class ReadTagsTab(QWidget):
                 }
             """)
             self.reader_detected.setText("No reader detected")
+
+    def read_from_card(self):
+        if not self.is_connected:
+            QMessageBox.warning(self, "Connection Error", "Please connect to an NFC reader first.")
+            return
+
+        try:
+            card_count = 1
+            all_configs = []
+            while True:
+                msg_box = QMessageBox(self)
+                msg_box.setWindowTitle("Insert Card")
+                msg_box.setText(f"Please insert card {card_count} and click OK to continue, or Cancel to stop.")
+                msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+                ret = msg_box.exec()
+
+                if ret == QMessageBox.StandardButton.Cancel:
+                    break
+
+                config = self.nfc_handler.read_config()
+                all_configs.append(config)
+                self.parent.set_config(config)  # Update GUI with the last read config
+                self.config_status.setText(f"Configuration read from card {card_count}")
+                card_count += 1
+
+            if all_configs:
+                final_config = all_configs[-1]  # Use the last config for now
+                self.parent.set_config(final_config)
+                QMessageBox.information(self, "Read Success", "Configuration read from NFC card(s) successfully.")
+                self.parent.tabs.setCurrentWidget(self.parent.summary_tab)
+            else:
+                QMessageBox.warning(self, "Read Warning", "No configuration data was read.")
+        except Exception as e:
+            QMessageBox.critical(self, "Read Error", f"Failed to read from NFC card: {str(e)}")

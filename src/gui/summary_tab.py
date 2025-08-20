@@ -70,16 +70,14 @@ class SummaryTab(QWidget):
         mqtt_heading_layout.addStretch()
         mqtt_layout.addLayout(mqtt_heading_layout)
 
-        mqtt_desc = QLabel("Host, Host Port, Username, Password")
+        mqtt_desc = QLabel("Host, Username, Password")
         mqtt_desc.setStyleSheet("color: #999999; font-size: 12px;")
         mqtt_layout.addWidget(mqtt_desc)
 
         self.mqtt_host = QLabel("Host: Not set")
-        self.mqtt_host_type = QLabel("Host Port: Not set")
         self.mqtt_username = QLabel("Username: Not set")
         self.mqtt_password = QLabel("Password: Not set")
         mqtt_layout.addWidget(self.mqtt_host)
-        mqtt_layout.addWidget(self.mqtt_host_type)
         mqtt_layout.addWidget(self.mqtt_username)
         mqtt_layout.addWidget(self.mqtt_password)
         mqtt_layout.addStretch(1)
@@ -133,7 +131,7 @@ class SummaryTab(QWidget):
 
         sntp_heading_layout = QHBoxLayout()
         sntp_icon = QLabel()
-        sntp_icon.setPixmap(QIcon("src/gui/assets/time_icon.png").pixmap(16, 16))  # Replace with actual icon path
+        sntp_icon.setPixmap(QIcon("src/gui/assets/time_icon.png").pixmap(16, 16)) 
         sntp_heading_layout.addWidget(sntp_icon)
         sntp_sub_heading = QLabel("SNTP Settings")
         sntp_sub_heading.setStyleSheet("font-size: 16px; font-weight: bold; color: #000000;")
@@ -208,7 +206,7 @@ class SummaryTab(QWidget):
                 background-color: #f0f0f0;
             }
         """)
-        prev_button.clicked.connect(lambda: self.parent.tabs.setCurrentIndex(0))
+        prev_button.clicked.connect(lambda: self.parent.tabs.setCurrentIndex(4))
 
         next_button = QPushButton("Next")
         next_button.setStyleSheet("""
@@ -222,6 +220,8 @@ class SummaryTab(QWidget):
                 background-color: #333333;
             }
         """)
+
+        next_button.clicked.connect(lambda: self.parent.tabs.setCurrentIndex(6))
 
         button_layout.addWidget(prev_button, alignment=Qt.AlignmentFlag.AlignLeft)
         button_layout.addStretch()

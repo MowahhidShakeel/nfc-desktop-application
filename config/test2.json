@@ -6,9 +6,8 @@
     "enterpriseIdentity": "",
     "enterpriseUsername": ""
   },
-  "mqtt": {
-    "host": "192.1687",
-    "port": 1883,
+  "mqtt": { 
+    "host": "192.168.7.1",
     "username": "1212",
     "password": "1212"
   },

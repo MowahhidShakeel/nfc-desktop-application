@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QPushButton, QMessageBox
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 from smartcard.scard import *
@@ -58,8 +58,29 @@ class WriteTagsTab(QWidget):
         reader_layout.addStretch(1)
 
         main_layout.addWidget(self.reader_box)
-        main_layout.addStretch(1)
 
+        # Configuration Data Box
+        self.config_box = self.create_group_box(
+            "Configuration Data",
+            "View the network configuration to be written to the NFC tag.",
+            "src/gui/assets/config_icon.png"
+        )
+        config_layout = self.config_box.layout()
+
+        self.config_status = QLabel("Configuration not loaded")
+        self.config_status.setStyleSheet("font-size: 12px; color: #999999;")
+        config_layout.addWidget(self.config_status)
+        config_layout.addStretch(1)
+
+        main_layout.addWidget(self.config_box)
+
+        # Write Button
+        write_button = QPushButton("Write to NFC Card")
+        write_button.setStyleSheet("font-size: 14px; padding: 5px 15px;")
+        write_button.clicked.connect(self.write_to_card)
+        main_layout.addWidget(write_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        main_layout.addStretch(1)
         self.setLayout(main_layout)
 
         # Attempt to connect to NFC reader
@@ -114,3 +135,16 @@ class WriteTagsTab(QWidget):
                 }
             """)
             self.reader_detected.setText("No reader detected")
+
+    def write_to_card(self):
+        if not self.is_connected:
+            QMessageBox.warning(self, "Connection Error", "Please connect to an NFC reader first.")
+            return
+
+        try:
+            config = self.parent.get_config()
+            self.nfc_handler.write_full_config(config)
+            QMessageBox.information(self, "Write Success", "Configuration written to NFC card successfully.")
+            self.config_status.setText("Configuration written to NFC card")
+        except Exception as e:
+            QMessageBox.critical(self, "Write Error", f"Failed to write to NFC card: {str(e)}")

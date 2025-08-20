@@ -104,7 +104,7 @@ class IpTab(QWidget):
         self.static_ip.setPlaceholderText("e.g. 192.168.1.100")
         self.set_field_style(self.static_ip)
 
-        self.netmask_label = QLabel("Netmask/CIDR *")
+        self.netmask_label = QLabel("Netmask/CIDR")
         self.netmask = QLineEdit()
         self.netmask.setPlaceholderText("e.g. 24")
         self.set_field_style(self.netmask)
@@ -128,7 +128,7 @@ class IpTab(QWidget):
             "src/gui/assets/gateway_icon.png"
         )
         gateway_layout = self.gateway_group.layout()
-        gateway_layout.addWidget(QLabel("Default Gateway *"))
+        gateway_layout.addWidget(QLabel("Default Gateway"))
         self.gateway = QLineEdit()
         self.gateway.setPlaceholderText("e.g. 192.168.1.1")
         self.set_field_style(self.gateway)
@@ -144,7 +144,7 @@ class IpTab(QWidget):
         )
         dns_layout = self.dns_group.layout()
 
-        dns_layout.addWidget(QLabel("Primary DNS Server *"))
+        dns_layout.addWidget(QLabel("Primary DNS Server"))
         self.dns1 = QLineEdit()
         self.dns1.setPlaceholderText("e.g. 8.8.8.8")
         self.set_field_style(self.dns1)

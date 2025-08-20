@@ -26,6 +26,35 @@ QSpinBox {
     color: #000000;
 }
 
+QComboBox {
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    padding: 4px;
+    background-color: #F8F8F8;
+    margin-top: 2px;
+    color: #000000;
+}
+
+QComboBox::drop-down {
+    border-left: 1px solid #CCCCCC;
+    background-color: #E0E0E0;
+    width: 20px;
+    color: black;
+}
+
+QComboBox QAbstractItemView {
+    border: 1px solid #CCCCCC;
+    background-color: #FFFFFF;
+    color: #000000; 
+    selection-background-color: #0056b3;
+    selection-color: #FFFFFF;
+}
+
+QComboBox QAbstractItemView::item:hover {
+    background-color: #F0F0F0;
+    color: #000000;
+}
+
 QCheckBox {
     color: #333333;
     margin-top: 2px;
