@@ -220,6 +220,7 @@ class NFCHandler:
                 self.connection.disconnect()
 
     def read_config(self, key16=None):
+
         try:
             self.connect()
             config = {"wifi": {}, "mqtt": {}, "ip": {}, "sntp": {}}
@@ -228,11 +229,15 @@ class NFCHandler:
             while True:
                 input("Insert a card and press Enter to continue...")
                 data = self.read_write_nfc(action="read", start_page=4, end_page=39)
+                
                 # Parse records from this card
                 i = 0
+
                 while i < len(data):
+                    
                     if i >= 144:
                         break
+
                     key = data[i]
                     i += 1
 
@@ -282,62 +287,57 @@ class NFCHandler:
                         break
                     if key == 0x00:
                         break
-
                 if not more_tags:
                     break
 
-                # Combine all records into config with IP aggregation
-                ip_values = {}
-                has_ip_data = False
-                for key, value in all_records:
-                    # Use the Key ID (lower 6 bits) for mapping
-                    key_id = key & 0x3F
+            # Combine all records into config with IP aggregation
+            ip_values = {}
+            has_ip_data = False
+            for key, value in all_records:
+                key_id = key & 0x3F
+                if key_id == 0x02: config["wifi"]["ssid"] = value
+                elif key_id == 0x03: config["wifi"]["enterpriseIdentity"] = value
+                elif key_id == 0x04: config["wifi"]["enterpriseUsername"] = value
+                elif key_id == 0x05: config["wifi"]["password"] = value
+                elif key_id == 0x06: config["wifi"]["enterpriseMode"] = {0x00: "EAP-TLS", 0x01: "EAP-PEAP", 0x02: "EAP-TTLS", 0xFF: ""}.get(value, "")
+                elif key_id == 0x10 or key_id == 0x50: config["mqtt"]["host"] = value
+                elif key_id == 0x11: config["mqtt"]["username"] = value
+                elif key_id == 0x12: config["mqtt"]["password"] = value
+                elif key_id == 0x20: # Correct ID for IPv4 address is 0x20
+                    ip_values["ipAddress"] = value
+                    has_ip_data = True
+                elif key_id == 0x21: # Correct ID for Netmask is 0x21
+                    ip_values["netmask"] = str(value)
+                    has_ip_data = True # Also set flag here
+                elif key_id == 0x22: # Correct ID for Gateway is 0x22
+                    ip_values["gateway"] = value
+                    has_ip_data = True # Also set flag here
+                elif key_id == 0x23: # Correct ID for DNS1 is 0x23
+                    ip_values["dns1"] = value
+                    has_ip_data = True # Also set flag here
+                elif key_id == 0x24: # Correct ID for DNS2 is 0x24
+                    ip_values["dns2"] = value
+                    has_ip_data = True # Also set flag here
+                elif key_id == 0x25: # Correct ID for DNS3 is 0x25
+                    ip_values["dns3"] = value
+                    has_ip_data = True # Also set flag here
+                elif key_id == 0x30 or key_id == 0x70: config["sntp"]["server1"] = {"value": value}
+                elif key_id == 0x31 or key_id == 0x71: config["sntp"]["server2"] = {"value": value}
+                elif key_id == 0x32 or key_id == 0x72: config["sntp"]["server3"] = {"value": value}
 
-                    if key_id == 0x02: config["wifi"]["ssid"] = value
-                    elif key_id == 0x03: config["wifi"]["enterpriseIdentity"] = value
-                    elif key_id == 0x04: config["wifi"]["enterpriseUsername"] = value
-                    elif key_id == 0x05: config["wifi"]["password"] = value
-                    elif key_id == 0x06: config["wifi"]["enterpriseMode"] = {0x00: "EAP-TLS", 0x01: "EAP-PEAP", 0x02: "EAP-TTLS", 0xFF: ""}.get(value, "")
-                    elif key_id == 0x10: config["mqtt"]["host"] = value 
-                    elif key_id == 0x11: config["mqtt"]["username"] = value
-                    elif key_id == 0x12: config["mqtt"]["password"] = value
-                    
-                    # Check against the correct Key IDs from the specification
-                    elif key_id == 0x20: 
-                        ip_values["ipAddress"] = value
-                        has_ip_data = True
-                    elif key_id == 0x21:
-                        ip_values["netmask"] = str(value)
-                        has_ip_data = True 
-                    elif key_id == 0x22:
-                        ip_values["gateway"] = value
-                        has_ip_data = True 
-                    elif key_id == 0x23:
-                        ip_values["dns1"] = value
-                        has_ip_data = True 
-                    elif key_id == 0x24:
-                        ip_values["dns2"] = value
-                        has_ip_data = True 
-                    elif key_id == 0x25: 
-                        ip_values["dns3"] = value
-                        has_ip_data = True 
-                        
-                    elif key_id == 0x30: config["sntp"]["server1"] = {"value": value}
-                    elif key_id == 0x31: config["sntp"]["server2"] = {"value": value}
-                    elif key_id == 0x32: config["sntp"]["server3"] = {"value": value}
-
-                # Update config["ip"] if IP data exists
-                if has_ip_data:
-                    config["ip"] = {"dhcpEnabled": False}
-                    config["ip"].update(ip_values)
+            # Update config["ip"] if IP data exists
+            if has_ip_data:
+                config["ip"] = {"dhcpEnabled": False}
+                config["ip"].update(ip_values)
 
             return config
 
         except Exception as e:
             raise RuntimeError(f"Configuration read failed: {e}")
+
         finally:
             if self.connection:
-                self.connection.disconnect()
+                self.connection.disconnect() 
 
 if __name__ == "__main__":
     handler = NFCHandler()
@@ -371,7 +371,7 @@ if __name__ == "__main__":
                 "server3": {"value": "time3.very.long.domain.name123"}
             }
         }
-        handler.write_full_config(test_config)
+        # handler.write_full_config(test_config)
         read_config = handler.read_config()
         print("Read configuration:", read_config)
     except Exception as e:
