@@ -40,13 +40,6 @@ class ImportTab(QWidget):
         description.setStyleSheet("color: #999999; font-size: 12px;")
         json_layout.addWidget(description)
 
-        # Drag and drop area
-        self.drop_area = QLabel("Drag and drop your JSON")
-        self.drop_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.drop_area.setStyleSheet("border: 2px dashed #CCCCCC; border-radius: 4px; padding: 10px; background-color: #F8F8F8;")
-        self.drop_area.setAcceptDrops(True)
-        json_layout.addWidget(self.drop_area)
-
         # Import & Continue button
         import_button = QPushButton("Import && Continue")
         import_button.clicked.connect(self.parent.import_json)

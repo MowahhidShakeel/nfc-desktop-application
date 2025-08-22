@@ -34,7 +34,7 @@ class WifiTab(QWidget):
         # Security Type
         group_layout.addWidget(QLabel("Security Type"))
         self.security_type = QComboBox()
-        self.security_type.addItems(["", "WPA2 Personal", "WPA2 Enterprise"])
+        self.security_type.addItems(["WPA2 Personal", "WPA2 Enterprise"])
         self.security_type.currentTextChanged.connect(self.toggle_enterprise_section)
         group_layout.addWidget(self.security_type)
 
