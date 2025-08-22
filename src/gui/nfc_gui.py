@@ -91,8 +91,8 @@ class NFCWindow(QMainWindow):
             self.is_connected = True
             self.status_label.setText("Connected to reader")
             self.log("Connected to reader")
-            self.write_tags_tab.update_connection_status()  # Update WriteTagsTab status
-            self.read_tags_tab.update_connection_status()   # Update ReadTagsTab status
+            self.write_tags_tab.update_connection_status()  
+            self.read_tags_tab.update_connection_status()   
         except Exception as e:
             self.status_label.setText("Connection failed")
             self.log(f"Error: {e}", level="ERROR")
@@ -236,7 +236,7 @@ class NFCWindow(QMainWindow):
         # ==== IP ====
         self.ip_tab.dhcp_toggle.setChecked(config["ip"].get("dhcpEnabled", True))
         self.ip_tab.static_ip.setText(config["ip"].get("ipAddress", ""))
-        self.ip_tab.netmask.setText(str(config["ip"].get("netmask", "")))  # QLineEdit needs string
+        self.ip_tab.netmask.setText(str(config["ip"].get("netmask", "")))
         self.ip_tab.gateway.setText(config["ip"].get("gateway", ""))
         self.ip_tab.dns1.setText(config["ip"].get("dns1", ""))
         if hasattr(self.ip_tab, "dns2"):
@@ -255,6 +255,10 @@ class NFCWindow(QMainWindow):
         self.summary_tab.wifi_ssid.setText(f"SSID: {self.wifi_tab.ssid.text() or 'Not set'}")
         self.summary_tab.wifi_security.setText(f"Security: {self.wifi_tab.security_type.currentText() or 'Not set'}")
         self.summary_tab.wifi_password.setText(f"Password: {self.wifi_tab.password.text() or 'Not set'}")
+        if (self.wifi_tab.security_type.currentText() == "WPA2 Enterprise"):
+            self.summary_tab.wifi_identity.setText(f"Identity: {self.wifi_tab.enterprise_identity.text() or 'Not set'}")
+            self.summary_tab.wifi_username.setText(f"Username: {self.wifi_tab.enterprise_username.text() or 'Not set'}")
+            self.summary_tab.wifi_authentication.setText(f"Authentication Mode: {self.wifi_tab.enterprise_mode.currentText() or 'Not set'}")
 
         # --- MQTT ---
         self.summary_tab.mqtt_host.setText(f"Host: {self.mqtt_tab.host.text() or 'Not set'}")

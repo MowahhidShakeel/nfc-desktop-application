@@ -48,11 +48,17 @@ class SummaryTab(QWidget):
         self.wifi_ssid = QLabel("SSID: Not set")
         self.wifi_security = QLabel("Security: Not set")
         self.wifi_password = QLabel("Password: Not set")
+        self.wifi_authentication = QLabel("Authentication Mode: Not set")
+        self.wifi_identity = QLabel("Identity: Not set")
+        self.wifi_username = QLabel("Username: Not set")
         wifi_layout.addWidget(self.wifi_ssid)
         wifi_layout.addWidget(self.wifi_security)
         wifi_layout.addWidget(self.wifi_password)
+        wifi_layout.addWidget(self.wifi_authentication)
+        wifi_layout.addWidget(self.wifi_identity)
+        wifi_layout.addWidget(self.wifi_username)
+        
         wifi_layout.addStretch(1) 
-
         left_column.addWidget(wifi_box)
 
         # 1.2 MQTT Settings Box
@@ -139,20 +145,16 @@ class SummaryTab(QWidget):
         sntp_heading_layout.addStretch()
         sntp_layout.addLayout(sntp_heading_layout)
 
-        sntp_desc = QLabel("Primary Server, Primary Type, Secondary Server, Tertiary Server, Tertiary Type")
+        sntp_desc = QLabel("Primary Server, Secondary Server, Tertiary Server")
         sntp_desc.setStyleSheet("color: #999999; font-size: 12px;")
         sntp_layout.addWidget(sntp_desc)
 
         self.sntp_server1 = QLabel("Primary Server: Not set")
-        self.sntp_server1_type = QLabel("Primary Type: Not set")
         self.sntp_server2 = QLabel("Secondary Server: Not set")
         self.sntp_server3 = QLabel("Tertiary Server: Not set")
-        self.sntp_server3_type = QLabel("Tertiary Type: Not set")
         sntp_layout.addWidget(self.sntp_server1)
-        sntp_layout.addWidget(self.sntp_server1_type)
         sntp_layout.addWidget(self.sntp_server2)
         sntp_layout.addWidget(self.sntp_server3)
-        sntp_layout.addWidget(self.sntp_server3_type)
 
         right_column.addWidget(sntp_box)
 

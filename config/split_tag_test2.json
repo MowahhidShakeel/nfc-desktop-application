@@ -1,0 +1,34 @@
+{
+  "wifi": {
+    "ssid": "VeryLongSSIDThatExceedsNormalLim",
+    "password": "VerySecurePassword1234567890abcde",
+    "enterpriseMode": "EAP-TTLS",
+    "enterpriseIdentity": "user@longdomain.com1234567890",
+    "enterpriseUsername": "user1234567890"
+  },
+  "mqtt": {
+    "host": "mqttserver.very.long.domain.name1234567890",
+    "username": "mqttuser1234567890",
+    "password": "mqttpass1234567890"
+  },
+  "ip": {
+    "dhcpEnabled": false,
+    "ipAddress": "192.168.1.100",
+    "netmask": "24",
+    "gateway": "192.168.1.1",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4",
+    "dns3": "1.1.1.1"
+  },
+  "sntp": {
+    "server1": {
+      "value": "time1.very.long.domain.name123"
+    },
+    "server2": {
+      "value": "time2.very.long.domain.name123"
+    },
+    "server3": {
+      "value": "time3.very.long.domain.name123"
+    }
+  }
+}
