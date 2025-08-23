@@ -16,7 +16,7 @@ class WriteTagsTab(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(10)
 
-        # --- Title and NFC Reader Status (Unchanged) ---
+        # --- Title and NFC Reader Status ---
         title_label = QLabel("Write NFC Tags")
         title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
         main_layout.addWidget(title_label)
@@ -138,6 +138,19 @@ class WriteTagsTab(QWidget):
     def load_config_data(self):
         """Called when the tab is shown or config is updated."""
         try:
+            # Call the parent's validation method
+            is_valid = self.parent.is_entire_config_valid()
+
+            # Set the button's enabled state based ONLY on the validation result
+            self.action_button.setEnabled(is_valid)
+            
+            # Add a helpful tooltip to explain why the button might be disabled
+            if not is_valid:
+                self.action_button.setToolTip("Button is disabled because some configuration fields are incomplete or invalid.")
+                self.parent.log("Writing is disabled due to invalid configuration.")
+            else:
+                self.action_button.setToolTip("")
+
             config = self.parent.get_config()
             # Use the handler to calculate requirements without starting the process
             temp_handler = MultiCardWriteHandler(self.nfc_handler, config)
@@ -146,9 +159,9 @@ class WriteTagsTab(QWidget):
 
             self.config_details_label.setText(f"<b>Total Data Size:</b> {data_len} bytes | <b>Tags Required:</b> {num_tags}")
             self._generate_usage_bars(temp_handler)
-            self.action_button.setEnabled(True)
+            
         except Exception as e:
-            self.config_details_label.setText("Error loading configuration.")
+            self.config_details_label.setText(f"Error loading configuration: {e}")
             self.action_button.setEnabled(False)
 
     def _generate_usage_bars(self, handler):
@@ -188,7 +201,6 @@ class WriteTagsTab(QWidget):
     def handle_write_action(self):
         """Central function for the main action button."""
         if not self.write_handler:
-            # --- This is the "Start Writing" click ---
             try:
                 config = self.parent.get_config()
                 self.write_handler = MultiCardWriteHandler(self.nfc_handler, config)

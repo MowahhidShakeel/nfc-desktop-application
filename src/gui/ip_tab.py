@@ -313,7 +313,7 @@ class IpTab(QWidget):
     def next_clicked(self):
         """Check valid inputs and navigate to next tab if valid"""
         if (self.is_valid()):
-            self.parent.tabs.setCurrentIndex(3)
+            self.parent.tabs.setCurrentIndex(4)
 
     def clear_error_styles(self):
         for field in [self.static_ip, self.netmask, self.gateway, self.dns1, self.dns2, self.dns3]:

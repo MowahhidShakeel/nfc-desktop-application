@@ -22,13 +22,13 @@
   },
   "sntp": {
     "server1": {
-      "value": "time1.very.long.domain.name123"
+      "value": "time1.very.long"
     },
     "server2": {
-      "value": "time2.very.long.domain.name123"
+      "value": "time2.very.long"
     },
     "server3": {
-      "value": "time3.very.long.domain.name123"
+      "value": "time3.very.long"
     }
   }
 }
