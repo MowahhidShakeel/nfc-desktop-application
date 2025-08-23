@@ -11,12 +11,13 @@ class ReadTagsTab(QWidget):
         super().__init__()
         self.parent = parent
         self.nfc_handler = nfc_handler
-        self.read_handler = None  # To hold the instance of the read process manager
+        self.read_handler = None
+        self.cards_scanned = 0 
 
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(10)
 
-        # --- Title and NFC Reader Status (Largely Unchanged) ---
+        # --- Title and NFC Reader Status ---
         title_label = QLabel("Read NFC Tags")
         title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
         main_layout.addWidget(title_label)
@@ -27,7 +28,7 @@ class ReadTagsTab(QWidget):
         self.reader_box = self._create_reader_status_box()
         main_layout.addWidget(self.reader_box)
 
-        # --- NEW: Reading Process Box (Initially Hidden) ---
+        # --- Reading Process Box ---
         self.reading_box = self._create_reading_process_box()
         self.reading_box.setVisible(False)
         main_layout.addWidget(self.reading_box)
@@ -38,14 +39,8 @@ class ReadTagsTab(QWidget):
         self.action_button.setStyleSheet("font-size: 14px; padding: 5px 15px;")
         self.action_button.clicked.connect(self.handle_read_action)
 
-        self.read_another_button = QPushButton("Read Another Set")
-        self.read_another_button.setStyleSheet("font-size: 14px; padding: 5px 15px;")
-        self.read_another_button.clicked.connect(self.reset_for_new_read)
-        self.read_another_button.setVisible(False)
-
         button_layout.addStretch()
         button_layout.addWidget(self.action_button)
-        button_layout.addWidget(self.read_another_button)
         button_layout.addStretch()
         main_layout.addLayout(button_layout)
 
@@ -54,7 +49,6 @@ class ReadTagsTab(QWidget):
 
     # --- UI Creation Helper Methods ---
     def _create_reader_status_box(self):
-        # This method is refactored from your original __init__
         group_box = self._create_group_box_template("NFC Reader Status", "Supported readers: ACR122U, ACR1252U-M1.", "src/gui/assets/nfc_icon.png")
         layout = group_box.layout()
         status_layout = QHBoxLayout()
@@ -71,11 +65,16 @@ class ReadTagsTab(QWidget):
         return group_box
 
     def _create_reading_process_box(self):
-        group_box = QGroupBox("Reading Tag")
+        group_box = QGroupBox("Reading Progress")
         layout = QVBoxLayout(group_box)
         self.read_status_label = QLabel("Waiting to start...")
         self.read_status_label.setStyleSheet("font-size: 12px; font-weight: bold;")
+        
+        # Layout to hold the dynamic data size labels
+        self.read_details_layout = QVBoxLayout()
+        
         layout.addWidget(self.read_status_label)
+        layout.addLayout(self.read_details_layout)
         return group_box
 
     def _create_group_box_template(self, title, description, icon_path):
@@ -97,72 +96,74 @@ class ReadTagsTab(QWidget):
 
     # --- Core Logic Methods ---
     def handle_read_action(self):
-        """Central function for the main action button, handling the read process."""
-        # --- This is the "Start Reading" click ---
+        # --- Start Reading ---
         if not self.read_handler:
+            self.reset_for_new_read() # Ensure a clean start
             self.read_handler = MultiCardReadHandler(self.nfc_handler)
             self.reading_box.setVisible(True)
-            self.action_button.setText("Scan Card & Proceed")
-            self.read_another_button.setVisible(False)
-            self.read_status_label.setText("Please insert the first card and press 'Scan'.")
+            self.action_button.setText("Scan Card && Proceed")
+            self.read_status_label.setText("Please insert the first card and press 'Scan Card & Proceed'.")
             return
 
-        # --- This is a "Scan Card & Proceed" click ---
+        # --- Scan Card & Proceed ---
         self.action_button.setEnabled(False)
         self.read_status_label.setText("Reading card... Please wait.")
         
-        # Call the handler to process one card
         result = self.read_handler.process_next_card()
         
         if result["status"] == "error":
             QMessageBox.critical(self, "Read Error", result["message"])
             self.reset_for_new_read()
             return
+    
+        self.cards_scanned += 1
+        
+        # Add a label showing the read card number
+        size_label = QLabel(f"✅ Card {self.cards_scanned}: Data read successfully.")
+        self.read_details_layout.addWidget(size_label)
 
         if result["status"] == "in_progress":
-            self.read_status_label.setText(result["message"])
             self.action_button.setEnabled(True)
 
         elif result["status"] == "finished":
             self.read_status_label.setText(result["message"])
             final_config = result["config"]
             
-            # Use the parent methods to update the rest of the GUI
             try:
                 self.parent.set_config(final_config)
                 self.parent.update_summary()
                 QMessageBox.information(self, "Read Complete", "Configuration read successfully. Showing summary.")
                 self.parent.tabs.setCurrentWidget(self.parent.summary_tab)
-                # Reset this tab for the next use
-                self.reset_for_new_read(show_another_button=True)
             except Exception as e:
                 QMessageBox.critical(self, "UI Error", f"Failed to display configuration: {e}")
                 self.reset_for_new_read()
 
     def reset_for_new_read(self, show_another_button=False):
-        """Resets the UI to its initial state to start another read process."""
         self.read_handler = None
+        self.cards_scanned = 0 
+        
+        # NEW: Clear old data size labels
+        while self.read_details_layout.count():
+            child = self.read_details_layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
         self.reading_box.setVisible(False)
         self.action_button.setText("Start Reading")
         self.action_button.setEnabled(True)
-        self.read_another_button.setVisible(show_another_button)
 
     def update_connection_status(self):
-        """Updates the reader connection status indicator."""
         try:
-            # A simple connect/disconnect to check status without holding the connection
             self.nfc_handler.connect()
             self.connection_status.setText("Connected")
             self.connection_status.setStyleSheet("color: #66cc66; border: 1px solid #66cc66; border-radius: 10px; padding: 2px 8px;")
             self.reader_detected.setText(f"{str(self.nfc_handler.reader)} detected")
-            if self.nfc_handler.connection:
-                self.nfc_handler.connection.disconnect()
+            if self.nfc_handler.connection: self.nfc_handler.connection.disconnect()
         except Exception:
             self.connection_status.setText("Disconnected")
             self.connection_status.setStyleSheet("color: #ff6666; border: 1px solid #ff6666; border-radius: 10px; padding: 2px 8px;")
             self.reader_detected.setText("No reader detected")
 
     def tab_shown(self):
-        """Public method to be called by the parent when this tab becomes visible."""
         self.update_connection_status()
         self.reset_for_new_read()

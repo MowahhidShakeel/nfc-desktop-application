@@ -19,7 +19,15 @@ class MultiCardReadHandler:
             data = self.nfc_handler.read_write_nfc(action="read", start_page=4, end_page=39)
         except Exception as e:
             return {"status": "error", "message": f"Failed to read card: {e}"}
-
+        
+        try:
+            # Find the first occurrence of the end-of-record list marker
+            end_of_data_index = data.index(b'\x00')
+            meaningful_data_size = end_of_data_index + 1
+        except ValueError:
+            # If no end marker is found, assume the full 144 bytes are used
+            meaningful_data_size = 144
+        
         # parsing logic 
         i = 0
         while i < len(data) and i < 144:
@@ -31,7 +39,6 @@ class MultiCardReadHandler:
             if key == 0x81: # Tag Flags
                 i += 1
                 continue
-            # ... (the rest of your value parsing logic for string, IPv4, byte) ...
             value = b""
             if (key & 0xC0) == 0x00 and (key & 0x3F) != 0:  # String
                 while i < len(data) and data[i] != 0x00:
@@ -100,24 +107,24 @@ class MultiCardReadHandler:
                 elif key_id == 0x10 or key_id == 0x50: config["mqtt"]["host"] = value
                 elif key_id == 0x11: config["mqtt"]["username"] = value
                 elif key_id == 0x12: config["mqtt"]["password"] = value
-                elif key_id == 0x20: # Correct ID for IPv4 address is 0x20
+                elif key_id == 0x20: # ID for IPv4 address
                     ip_values["ipAddress"] = value
                     has_ip_data = True
-                elif key_id == 0x21: # Correct ID for Netmask is 0x21
+                elif key_id == 0x21: #  ID for Netmask is 0x21
                     ip_values["netmask"] = str(value)
-                    has_ip_data = True # Also set flag here
-                elif key_id == 0x22: # Correct ID for Gateway is 0x22
+                    has_ip_data = True # 
+                elif key_id == 0x22: # ID for Gateway
                     ip_values["gateway"] = value
-                    has_ip_data = True # Also set flag here
-                elif key_id == 0x23: # Correct ID for DNS1 is 0x23
+                    has_ip_data = True # 
+                elif key_id == 0x23: # ID for DNS1 
                     ip_values["dns1"] = value
-                    has_ip_data = True # Also set flag here
-                elif key_id == 0x24: # Correct ID for DNS2 is 0x24
+                    has_ip_data = True 
+                elif key_id == 0x24: # ID for DNS2
                     ip_values["dns2"] = value
-                    has_ip_data = True # Also set flag here
-                elif key_id == 0x25: # Correct ID for DNS3 is 0x25
+                    has_ip_data = True 
+                elif key_id == 0x25: # ID for DNS3
                     ip_values["dns3"] = value
-                    has_ip_data = True # Also set flag here
+                    has_ip_data = True 
                 elif key_id == 0x30 or key_id == 0x70: config["sntp"]["server1"] = {"value": value}
                 elif key_id == 0x31 or key_id == 0x71: config["sntp"]["server2"] = {"value": value}
                 elif key_id == 0x32 or key_id == 0x72: config["sntp"]["server3"] = {"value": value}
