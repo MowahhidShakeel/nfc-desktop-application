@@ -11,7 +11,7 @@ class WriteTagsTab(QWidget):
         super().__init__()
         self.parent = parent
         self.nfc_handler = nfc_handler
-        self.write_handler = None  # To hold the instance of the write process manager
+        self.write_handler = None 
 
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(10)
@@ -188,7 +188,7 @@ class WriteTagsTab(QWidget):
     def handle_write_action(self):
         """Central function for the main action button."""
         if not self.write_handler:
-            # --- "Start Writing" click ---
+            # --- This is the "Start Writing" click ---
             try:
                 config = self.parent.get_config()
                 self.write_handler = MultiCardWriteHandler(self.nfc_handler, config)
@@ -271,6 +271,7 @@ class WriteTagsTab(QWidget):
             self.checklist_labels[step].setText(f"❌ {text}")
 
     def update_connection_status(self):
+        # This method is unchanged from your original file
         try:
             self.nfc_handler.connect()
             self.connection_status.setText("Connected")

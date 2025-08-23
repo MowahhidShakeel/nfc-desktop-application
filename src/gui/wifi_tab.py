@@ -9,7 +9,7 @@ class WifiTab(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-
+        self.valid = True
         main_layout = QVBoxLayout()
         main_layout.setSpacing(10)
 
@@ -118,7 +118,7 @@ class WifiTab(QWidget):
                 background-color: #333333;
             }
         """)
-        next_button.clicked.connect(self.validate_inputs)
+        next_button.clicked.connect(self.next_clicked)
 
         button_layout.addWidget(prev_button, alignment=Qt.AlignmentFlag.AlignLeft)
         button_layout.addStretch()
@@ -182,8 +182,13 @@ class WifiTab(QWidget):
         """Show or hide enterprise section based on security type."""
         self.enterprise_group.setVisible(value == "WPA2 Enterprise")
 
-    def validate_inputs(self):
-        """Validates required fields and shows error messages."""
+    def next_clicked(self):
+        """Check valid inputs and navigate to next tab if valid"""
+        if (self.is_valid()):
+            self.parent.tabs.setCurrentIndex(2)
+         
+    def is_valid(self):
+        """Validates required fields."""
         errors = []
         self.clear_error_styles()
 
@@ -200,34 +205,13 @@ class WifiTab(QWidget):
                         padding: 4px;
                     }
                 """)
+            
+            self.parent.log("Add Wifi error message here")
 
-            msg = QMessageBox(self)
-            msg.setWindowTitle("Validation Error")
-            msg.setText("Please fix all errors before proceeding to the next step.")
-            msg.setIcon(QMessageBox.Icon.Warning)
-            msg.setStyleSheet("""
-                QMessageBox {
-                    background-color: white;
-                    color: black;
-                }
-                QLabel {
-                    color: black;
-                }
-                QPushButton {
-                    background-color: #f0f0f0;
-                    color: black;
-                    border: 1px solid #ccc;
-                    padding: 4px 8px;
-                }
-                QPushButton:hover {
-                    background-color: #e0e0e0;
-                }
-            """)
-            msg.exec()
-            return
-
+            return False
+        
         # If everything is valid, go to next tab
-        self.parent.tabs.setCurrentIndex(2)
+        return True
 
     def clear_error_styles(self):
         """Reset all field styles."""

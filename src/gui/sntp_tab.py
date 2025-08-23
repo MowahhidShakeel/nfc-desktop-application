@@ -86,7 +86,7 @@ class SntpTab(QWidget):
                 background-color: #333333;
             }
         """)
-        next_button.clicked.connect(self.validate_inputs)
+        next_button.clicked.connect(self.next_clicked)
 
         button_layout.addWidget(prev_button, alignment=Qt.AlignmentFlag.AlignLeft)
         button_layout.addStretch()
@@ -147,12 +147,11 @@ class SntpTab(QWidget):
             }
         """)
 
-    def validate_inputs(self):
+    def is_valid(self):
         """Validates required fields and logs errors."""
         errors = []
         self.clear_error_styles()
 
-        # Primary server is required
         if not self.primary_server.text().strip():
             errors.append(("Primary SNTP Server *", self.primary_server))
         elif not self.is_valid_hostname_or_ip(self.primary_server.text().strip()):
@@ -174,31 +173,25 @@ class SntpTab(QWidget):
                         padding: 4px;
                     }
                 """)
-            self.show_error_message("Please fix all errors before proceeding to the next step.")
+            self.parent.log("Add SNTP error message here")
             for field_name, _ in errors:
                 self.parent.log(f"Validation error: {field_name}", level="ERROR")
-            return
+            return False
 
         self.parent.log("SNTP settings validated successfully.")
-        self.parent.tabs.setCurrentIndex(5)
+        return True
 
+    def next_clicked(self):
+        """Check valid inputs and navigate to next tab if valid"""
+        if (self.is_valid()):
+            self.parent.tabs.setCurrentIndex(5)
+            
     def is_valid_hostname_or_ip(self, value):
         """Basic hostname or IPv4 validation."""
         ip_pattern = r"^(?:\d{1,3}\.){3}\d{1,3}$"
         hostname_pattern = r"^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(?:\.[A-Za-z]{2,})+$"
         return re.match(ip_pattern, value) or re.match(hostname_pattern, value)
 
-    def show_error_message(self, message):
-        """Shows an error message that works on both light and dark themes."""
-        msg = QMessageBox(self)
-        msg.setWindowTitle("Validation Error")
-        msg.setText(message)
-        msg.setIcon(QMessageBox.Icon.Warning)
-        msg.setStyleSheet("""
-            QMessageBox { color: black; background-color: white; }
-            QLabel { color: black; }
-        """)
-        msg.exec()
 
     def clear_error_styles(self):
         """Reset all field styles."""

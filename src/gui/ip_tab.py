@@ -174,7 +174,7 @@ class IpTab(QWidget):
 
         next_button = QPushButton("Next")
         next_button.setStyleSheet(self.nav_button_style(light=False))
-        next_button.clicked.connect(self.validate_inputs)
+        next_button.clicked.connect(self.next_clicked)
 
         button_layout.addWidget(prev_button, alignment=Qt.AlignmentFlag.AlignLeft)
         button_layout.addStretch()
@@ -276,11 +276,11 @@ class IpTab(QWidget):
         if self.parent.tabs.currentWidget() == self:
             self.toggle_dhcp()
 
-    def validate_inputs(self):
+    def is_valid(self):
         errors = []
         self.clear_error_styles()
 
-        if not self.dhcp_toggle.isChecked():  # Static mode
+        if not self.dhcp_toggle.isChecked():
             if not self.is_valid_ip(self.static_ip.text()):
                 errors.append(("IPv4 Address *", self.static_ip))
             if not self.netmask.text().strip().isdigit() or not (0 <= int(self.netmask.text()) <= 32):
@@ -303,15 +303,17 @@ class IpTab(QWidget):
                         padding: 4px;
                     }
                 """)
+                
                 self.parent.log(f"IP Tab Validation Error: {field_name} is invalid or missing", level="ERROR")
 
+            return False
 
-            QMessageBox.warning(self, "Validation Error", "Please fix all errors before proceeding.")
-            return
-
-
-        self.parent.log("IP configuration validated successfully.")
-        self.parent.tabs.setCurrentIndex(4)
+        return True
+    
+    def next_clicked(self):
+        """Check valid inputs and navigate to next tab if valid"""
+        if (self.is_valid()):
+            self.parent.tabs.setCurrentIndex(3)
 
     def clear_error_styles(self):
         for field in [self.static_ip, self.netmask, self.gateway, self.dns1, self.dns2, self.dns3]:

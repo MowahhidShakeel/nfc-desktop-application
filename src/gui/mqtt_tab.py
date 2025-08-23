@@ -101,7 +101,7 @@ class MqttTab(QWidget):
                 background-color: #333333;
             }
         """)
-        next_button.clicked.connect(self.validate_inputs)
+        next_button.clicked.connect(self.next_clicked)
 
         button_layout.addWidget(prev_button, alignment=Qt.AlignmentFlag.AlignLeft)
         button_layout.addStretch()
@@ -175,7 +175,7 @@ class MqttTab(QWidget):
         """)
 
     # Validation 
-    def validate_inputs(self):
+    def is_valid(self):
         errors = []
         self.clear_error_styles()
 
@@ -190,11 +190,15 @@ class MqttTab(QWidget):
                         padding: 4px;
                     }
                 """)
-            self.show_error_message("Please fill in all required fields.")
-            return
+            self.parent.log("Add MQTT error message here")
+            return False
+        return True
 
-        self.parent.tabs.setCurrentIndex(3)
-
+    def next_clicked(self):
+        """Check valid inputs and navigate to next tab if valid"""
+        if (self.is_valid()):
+            self.parent.tabs.setCurrentIndex(3)
+            
     def clear_error_styles(self):
         self.set_field_style(self.host)
         self.set_field_style(self.username)

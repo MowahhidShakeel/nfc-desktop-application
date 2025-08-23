@@ -69,6 +69,11 @@ class NFCWindow(QMainWindow):
         self.tabs.currentChanged.connect(lambda idx:
             self.read_tags_tab.tab_shown() if self.tabs.widget(idx) == self.read_tags_tab else None
         )
+        
+        # Lock tabs from WiFi to Write tab
+        # for i in range(1, 7):
+        #     self.tabs.setTabEnabled(i, False)
+            
         # Log area
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
@@ -116,7 +121,8 @@ class NFCWindow(QMainWindow):
                     config = json.load(f)
                 self.set_config(config)
                 self.log(f"Imported JSON from {file_name}")
-
+                
+                self.tabs.setTabEnabled(1, True)
                 self.tabs.setCurrentWidget(self.wifi_tab)
         except Exception as e:
             self.log(f"Import error: {e}", level="ERROR")
@@ -157,6 +163,7 @@ class NFCWindow(QMainWindow):
             self.sntp_tab.secondary_server.clear()
             self.sntp_tab.tertiary_server.clear()
 
+            self.tabs.setTabEnabled(1, True)
             self.tabs.setCurrentWidget(self.wifi_tab)
             self.log("New configuration created")
             self.update_summary()
@@ -292,6 +299,15 @@ class NFCWindow(QMainWindow):
             self.nfc.connection.disconnect()
             self.log("Disconnected from reader")
         event.accept()
+        
+    def is_entire_config_valid(self):
+        """Checks if the data in all configuration tabs is valid."""
+        return (
+            self.wifi_tab.is_valid() and
+            self.mqtt_tab.is_valid() and
+            self.ip_tab.is_valid() and
+            self.sntp_tab.is_valid()
+        )
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

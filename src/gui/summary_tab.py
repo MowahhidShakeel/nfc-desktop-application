@@ -103,7 +103,7 @@ class SummaryTab(QWidget):
 
         ip_heading_layout = QHBoxLayout()
         ip_icon = QLabel()
-        ip_icon.setPixmap(QIcon("src/gui/assets/ip_icon.png").pixmap(16, 16))  # Replace with actual icon path
+        ip_icon.setPixmap(QIcon("src/gui/assets/ip_icon.png").pixmap(16, 16))
         ip_heading_layout.addWidget(ip_icon)
         ip_sub_heading = QLabel("IP Settings")
         ip_sub_heading.setStyleSheet("font-size: 16px; font-weight: bold; color: #000000;")
@@ -187,7 +187,7 @@ class SummaryTab(QWidget):
             }
         """)
 
-        # Connect to export function (to be implemented by parent)
+        # Connect to export function
         export_button.clicked.connect(lambda: parent.export_json())
         json_layout.addWidget(export_button)
         
