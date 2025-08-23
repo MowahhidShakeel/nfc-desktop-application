@@ -61,7 +61,14 @@ class NFCWindow(QMainWindow):
         self.tabs.currentChanged.connect(lambda idx: 
             self.update_summary() if self.tabs.widget(idx) == self.summary_tab else None
         )
-
+        
+        self.tabs.currentChanged.connect(lambda idx:
+            self.write_tags_tab.tab_shown() if self.tabs.widget(idx) == self.write_tags_tab else None
+        )
+        
+        self.tabs.currentChanged.connect(lambda idx:
+            self.read_tags_tab.tab_shown() if self.tabs.widget(idx) == self.read_tags_tab else None
+        )
         # Log area
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
