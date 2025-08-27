@@ -8,4 +8,5 @@ installer/Output
 installer/setup
 *.log
 venv-build
-
+build/
+dist/
