@@ -290,14 +290,20 @@ class IpTab(QWidget):
         errors = []
         self.clear_error_styles()
 
+        # Check parameters if DHCP is enabled
         if not self.dhcp_toggle.isChecked():
+            # Make sure it follows the IPv4 address format
             if not self.is_valid_ip(self.static_ip.text()):
                 errors.append(("IPv4 Address *", self.static_ip))
-            if not self.netmask.text().strip().isdigit() or not (0 <= int(self.netmask.text()) <= 32):
-                errors.append(("Netmask/CIDR *", self.netmask))
-            if not self.is_valid_ip(self.gateway.text()):
+            # If netmask is non-empty (optional value)
+            if (self.netmask.text().strip()):
+                if not self.netmask.text().strip().isdigit() or not (0 <= int(self.netmask.text()) <= 32):
+                    errors.append(("Netmask/CIDR *", self.netmask))
+            # If gateway address is non-empty (optional value)
+            if self.gateway.text().strip() and not self.is_valid_ip(self.gateway.text()):
                 errors.append(("Default Gateway *", self.gateway))
-            if not self.is_valid_ip(self.dns1.text()):
+            # If DNS1 is non-empty (optional value)
+            if (self.dns1.text().strip()) and not self.is_valid_ip(self.dns1.text()):
                 errors.append(("Primary DNS Server *", self.dns1))
 
             for dns_field in [self.dns2, self.dns3]:
