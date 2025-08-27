@@ -3,4 +3,9 @@ __pycache__/
 *.pyc
 logs/
 installer/dist/
+installer/build/
+installer/Output
+installer/setup
 *.log
+venv-build
+

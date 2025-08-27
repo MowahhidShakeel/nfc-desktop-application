@@ -17,7 +17,7 @@ import json
 class NFCWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("NFC Desktop Application")
+        self.setWindowTitle("Elixion Niviu Network Configuration Tool")
         self.setGeometry(100, 100, 900, 900)
         self.setStyleSheet(STYLESHEET)
 
@@ -69,10 +69,6 @@ class NFCWindow(QMainWindow):
         self.tabs.currentChanged.connect(lambda idx:
             self.read_tags_tab.tab_shown() if self.tabs.widget(idx) == self.read_tags_tab else None
         )
-        
-        # Lock tabs from WiFi to Write tab
-        # for i in range(1, 7):
-        #     self.tabs.setTabEnabled(i, False)
             
         # Log area
         self.log_area = QTextEdit()
