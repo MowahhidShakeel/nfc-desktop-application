@@ -35,6 +35,7 @@ class SntpTab(QWidget):
         group_layout.addWidget(QLabel("Primary SNTP Server *"))
         self.primary_server = QLineEdit()
         self.set_field_style(self.primary_server)
+        self.primary_server.setText("0.pool.ntp.org")
         self.primary_server.setPlaceholderText("Enter hostname (e.g., pool.ntp.org) or IPv4 address")
         group_layout.addWidget(self.primary_server)
 
