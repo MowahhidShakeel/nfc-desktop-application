@@ -271,7 +271,17 @@ class IpTab(QWidget):
         self.netmask.setVisible(not enabled)
         self.gateway_group.setVisible(not enabled)
         self.dns_group.setVisible(not enabled)
-
+        
+        # If DHCP is enabled, clear all other parameters
+        if (enabled == True):
+            self.static_ip.clear()
+            self.netmask.clear()
+            self.gateway.clear()
+            self.dns1.clear()
+            self.dns2.clear()
+            self.dns3.clear()    
+        
+        
     def sync_dhcp_layout(self, index):
         if self.parent.tabs.currentWidget() == self:
             self.toggle_dhcp()
