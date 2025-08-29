@@ -58,8 +58,9 @@ QComboBox QAbstractItemView::item:hover {
 QCheckBox {
     color: #333333;
     margin-top: 2px;
+    spacing: 5px;
 }
-
+    
 QPushButton {
     background-color: #007BFF;
     color: #FFFFFF;

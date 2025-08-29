@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox,
-    QPushButton, QGroupBox, QComboBox, QMessageBox
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QGroupBox, QComboBox, QCheckBox
 )
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import Qt
 
 class WifiTab(QWidget):
@@ -51,11 +51,19 @@ class WifiTab(QWidget):
         self.password = QLineEdit()
         self.password.setMaxLength(64)
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
-        self.password.setPlaceholderText("Enter WiFi password")
-        self.set_field_style(self.password)
-        group_layout.addWidget(self.password)
+        self.password.setPlaceholderText("Enter Wi-Fi password")
 
         main_layout.addWidget(self.network_group)
+
+        # Checkbox to toggle show/hide
+        self.show_password_checkbox = QCheckBox("Show Password")
+        self.show_password_checkbox.stateChanged.connect(self.toggle_password_visibility)
+
+
+        # Add stretch to push button to the right
+        group_layout.addStretch()
+        group_layout.addWidget(self.password)
+        group_layout.addWidget(self.show_password_checkbox)
 
         # === Enterprise Settings Group (Hidden initially) ===
         self.enterprise_group = self.create_group_box(
@@ -182,6 +190,13 @@ class WifiTab(QWidget):
         """Show or hide enterprise section based on security type."""
         self.enterprise_group.setVisible(value == "WPA2 Enterprise")
 
+    def toggle_password_visibility(self, state):
+        """Show/hide the password based on checkbox value """
+        if state == Qt.CheckState.Checked.value:
+            self.password.setEchoMode(QLineEdit.EchoMode.Normal)  
+        else:
+            self.password.setEchoMode(QLineEdit.EchoMode.Password)  
+        
     def next_clicked(self):
         """Check valid inputs and navigate to next tab if valid"""
         if (self.is_valid()):
