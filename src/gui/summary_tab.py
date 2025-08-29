@@ -18,7 +18,6 @@ class SummaryTab(QWidget):
         subtitle_label.setStyleSheet("color: grey;")
         main_layout.addWidget(subtitle_label)
 
-        # --- MODIFIED LAYOUT LOGIC ---
         # Use QGridLayout for a perfectly balanced 2x2 grid
         grid_layout = QGridLayout()
         grid_layout.setSpacing(10)
@@ -35,11 +34,7 @@ class SummaryTab(QWidget):
         grid_layout.addWidget(mqtt_box, 1, 0)  # Row 1, Column 0
         grid_layout.addWidget(sntp_box, 1, 1)  # Row 1, Column 1
         
-        # --- END OF MODIFIED LAYOUT LOGIC ---
-
         main_layout.addLayout(grid_layout)
-
-        # --- (The rest of your layout is unchanged) ---
 
         # Export JSON
         self.json_group = self.create_group_box(
@@ -71,7 +66,6 @@ class SummaryTab(QWidget):
         main_layout.addLayout(button_layout)
  
     # --- Helper Methods to Create Each Box ---
-    # I've broken down the creation of each box into its own method for clarity.
     
     def _create_wifi_box(self):
         wifi_box = QGroupBox()

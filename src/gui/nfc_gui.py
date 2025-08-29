@@ -1,5 +1,6 @@
-from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QWidget, QLabel, QTabWidget, QFileDialog, QTextEdit
+from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QWidget, QLabel, QTabWidget, QFileDialog, QTextEdit, QSplitter
 from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt
 from src.gui.import_tab import ImportTab
 from src.gui.wifi_tab import WifiTab
 from src.gui.mqtt_tab import MqttTab
@@ -20,10 +21,9 @@ class NFCWindow(QMainWindow):
         self.setWindowTitle("Elixion Niviu Network Configuration Tool")
         
         # Screen-aware sizing
-        # QApplication.setStyle("Fusion")
         screen = QApplication.primaryScreen().availableGeometry()
         self.resize(int(screen.width() * 0.7), int(screen.height() * 0.7))
-        self.setMinimumSize(1000, 600)
+        self.setMinimumSize(400, 900)
 
         self.setStyleSheet(STYLESHEET)
         
@@ -75,11 +75,16 @@ class NFCWindow(QMainWindow):
         self.tabs.currentChanged.connect(lambda idx:
             self.read_tags_tab.tab_shown() if self.tabs.widget(idx) == self.read_tags_tab else None
         )
+         
             
         # Log area
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
-        main_layout.addWidget(self.log_area)
+        self.splitter = QSplitter(Qt.Orientation.Vertical)
+        self.splitter.addWidget(self.tabs)
+        self.splitter.addWidget(self.log_area)
+        self.splitter.setSizes([800, 200])  # initial ratio
+        main_layout.addWidget(self.splitter)
 
         # Set up central widget
         container = QWidget()

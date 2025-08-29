@@ -14,7 +14,7 @@ class ToggleSwitch(QWidget):
         self._checked = checked
         self._offset = 1 if checked else 0
         self.setFixedSize(50, 25)
-
+        
         self.animation = QPropertyAnimation(self, b"offset")
         self.animation.setDuration(200)
 
