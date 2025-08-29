@@ -18,9 +18,15 @@ class NFCWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Elixion Niviu Network Configuration Tool")
-        self.setGeometry(100, 100, 900, 900)
-        self.setStyleSheet(STYLESHEET)
+        
+        # Screen-aware sizing
+        # QApplication.setStyle("Fusion")
+        screen = QApplication.primaryScreen().availableGeometry()
+        self.resize(int(screen.width() * 0.7), int(screen.height() * 0.7))
+        self.setMinimumSize(1000, 600)
 
+        self.setStyleSheet(STYLESHEET)
+        
         # Initialize logger and NFC handler
         self.logger = setup_logger()
         self.nfc = NFCHandler()

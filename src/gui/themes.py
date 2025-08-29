@@ -1,119 +1,135 @@
 STYLESHEET = """
+/* ======================
+   Main Window
+   ====================== */
 QMainWindow {
     background-color: #FFFFFF;
 }
 
+/* ======================
+   Text Elements
+   ====================== */
 QLabel {
-    color: #333333;
+    color: #222222;
     font-size: 14px;
 }
 
-QLineEdit {
+QCheckBox {
+    color: #222222;
+    margin-top: 2px;
+    spacing: 5px;
+    font-size: 13px;
+}
+
+/* ======================
+   Input Fields
+   ====================== */
+QLineEdit, 
+QSpinBox, 
+QComboBox, 
+QTextEdit {
     border: 1px solid #CCCCCC;
     border-radius: 4px;
     padding: 4px;
-    background-color: #F8F8F8;
-    margin-top: 2px;
+    background-color: #FFFFFF;
     color: #000000;
+    font-size: 13px;
 }
 
-QSpinBox {
-    border: 1px solid #CCCCCC;
-    border-radius: 4px;
-    padding: 4px;
-    background-color: #F8F8F8;
-    margin-top: 2px;
-    color: #000000;
+QLineEdit:focus, 
+QSpinBox:focus, 
+QComboBox:focus, 
+QTextEdit:focus {
+    border: 1px solid #007BFF;
+    outline: none;
 }
 
-QComboBox {
-    border: 1px solid #CCCCCC;
-    border-radius: 4px;
-    padding: 4px;
-    background-color: #F8F8F8;
-    margin-top: 2px;
-    color: #000000;
-}
-
+/* ======================
+   ComboBox
+   ====================== */
 QComboBox::drop-down {
     border-left: 1px solid #CCCCCC;
-    background-color: #E0E0E0;
+    background-color: #E9F2FF;
     width: 20px;
-    color: black;
 }
 
 QComboBox QAbstractItemView {
     border: 1px solid #CCCCCC;
     background-color: #FFFFFF;
-    color: #000000; 
-    selection-background-color: #0056b3;
+    color: #000000;
+    selection-background-color: #007BFF;
     selection-color: #FFFFFF;
 }
 
 QComboBox QAbstractItemView::item:hover {
-    background-color: #F0F0F0;
+    background-color: #E9F2FF;
     color: #000000;
 }
 
-QCheckBox {
-    color: #333333;
-    margin-top: 2px;
-    spacing: 5px;
-}
-    
+/* ======================
+   Buttons
+   ====================== */
 QPushButton {
     background-color: #007BFF;
     color: #FFFFFF;
     border-radius: 4px;
-    padding: 6px;
+    padding: 6px 10px;
     font-size: 14px;
-    margin-top: 2px;
 }
 
 QPushButton:hover {
     background-color: #0056b3;
 }
 
+QPushButton:pressed {
+    background-color: #004080;
+}
+
+/* ======================
+   Tabs
+   ====================== */
 QTabWidget::pane {
-    border: none;
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    margin-top: -1px;
 }
 
 QTabBar::tab {
-    background-color: #000000;
-    color: #FFFFFF;
-    padding: 8px;
+    background-color: #F1F1F1;
+    color: #000000;
+    padding: 8px 14px;
     margin-right: 2px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
 }
 
 QTabBar::tab:hover {
-    background-color: #FFFFFF;
+    background-color: #E9F2FF;
     color: #000000;
 }
 
 QTabBar::tab:selected {
-    background-color: #0056b3;
+    background-color: #007BFF;
     color: #FFFFFF;
 }
 
-QTextEdit {
-    border: 1px solid #CCCCCC;
-    border-radius: 4px;
-    background-color: #F8F8F8;
-    margin-top: 2px;
-    color: #000000;
-}
-
+/* ======================
+   Text Display
+   ====================== */
 QTextBrowser {
     border: none;
     background-color: #F8F8F8;
-    margin-top: 2px;
     color: #000000;
+    padding: 4px;
 }
 
+/* ======================
+   Group Boxes
+   ====================== */
 QGroupBox {
     border: 1px solid #CCCCCC;
     border-radius: 4px;
-    background-color: #F8F8F8;
+    background-color: #FAFAFA;
     margin-top: 10px;
     padding: 10px;
 }

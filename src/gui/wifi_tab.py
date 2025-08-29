@@ -52,6 +52,7 @@ class WifiTab(QWidget):
         self.password.setMaxLength(64)
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.password.setPlaceholderText("Enter Wi-Fi password")
+        self.set_field_style(self.password)
 
         main_layout.addWidget(self.network_group)
 
