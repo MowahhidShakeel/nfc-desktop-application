@@ -7,14 +7,17 @@ def setup_logger():
     logger = logging.getLogger('NFCApp')
     logger.setLevel(logging.INFO)
 
-    # Create logs directory if it doesn't exist
-    os.makedirs('logs', exist_ok=True)
+    # Use user's AppData folder for logs
+    appdata_dir = os.path.join(os.environ.get("APPDATA", os.getcwd()), "ElixionNiviu", "logs")
+    os.makedirs(appdata_dir, exist_ok=True)
 
-    # File handler with rotation (1MB per file, max 3 backups)
+    log_path = os.path.join(appdata_dir, "nfc_app.log")
+
     file_handler = RotatingFileHandler(
-        'logs/nfc_app.log',
+        log_path,
         maxBytes=1_000_000,  # 1MB
-        backupCount=3
+        backupCount=3,
+        encoding="utf-8"
     )
     file_handler.setLevel(logging.INFO)
     file_formatter = logging.Formatter(
@@ -23,7 +26,6 @@ def setup_logger():
     )
     file_handler.setFormatter(file_formatter)
 
-    # Add handler to logger (avoid duplicate handlers)
     if not logger.handlers:
         logger.addHandler(file_handler)
 

@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['src\\main.py'],
+    ['../src/main.py'],
     pathex=[],
     binaries=[],
-    datas=[('src/gui/assets', '_internal/assets')],
+    datas=[('../src/gui/assets', '_internal/assets')],
     hiddenimports=['PyQt6'],
     hookspath=[],
     hooksconfig={},
@@ -32,7 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['resources\\elixion_medical.ico'],
+    icon=['../resources/elixion_medical.ico'],
 )
 coll = COLLECT(
     exe,

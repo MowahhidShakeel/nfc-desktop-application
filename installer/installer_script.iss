@@ -14,7 +14,7 @@ WizardStyle=modern
 
 [Files]
 ; Packages the main application from the PyInstaller dist folder
-Source: "dist/Elixion Niviu Network Configuration Tool/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "../dist/Elixion Niviu Network Configuration Tool/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "driver\*"; DestDir: "{tmp}\driver"; Flags: recursesubdirs createallsubdirs deleteafterinstall
 Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
