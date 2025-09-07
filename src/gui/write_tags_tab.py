@@ -3,7 +3,6 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 
 # Make sure your handler classes are available for import
-# You might need to adjust the import path based on your project structure
 from ..core.write_handler import MultiCardWriteHandler
 
 class WriteTagsTab(QWidget):
@@ -11,7 +10,7 @@ class WriteTagsTab(QWidget):
         super().__init__()
         self.parent = parent
         self.nfc_handler = nfc_handler
-        self.write_handler = None 
+        self.write_handler = None
 
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(10)
@@ -23,7 +22,7 @@ class WriteTagsTab(QWidget):
         subtitle_label = QLabel("Connect your NFC reader and write the configuration to Mifare Ultralight tags.")
         subtitle_label.setStyleSheet("color: grey;")
         main_layout.addWidget(subtitle_label)
-        
+
         self.reader_box = self._create_reader_status_box()
         main_layout.addWidget(self.reader_box)
 
@@ -31,7 +30,7 @@ class WriteTagsTab(QWidget):
         self.config_box = self._create_config_data_box()
         main_layout.addWidget(self.config_box)
 
-        # --- NEW: Writing Process Box (Initially Hidden) ---
+        # --- Writing Process Box (Initially Hidden) ---
         self.writing_box = self._create_writing_process_box()
         self.writing_box.setVisible(False)
         main_layout.addWidget(self.writing_box)
@@ -41,7 +40,7 @@ class WriteTagsTab(QWidget):
         self.action_button = QPushButton("Start Writing")
         self.action_button.setStyleSheet("font-size: 14px; padding: 5px 15px;")
         self.action_button.clicked.connect(self.handle_write_action)
-        
+
         self.write_another_button = QPushButton("Write Another Set")
         self.write_another_button.setStyleSheet("font-size: 14px; padding: 5px 15px;")
         self.write_another_button.clicked.connect(self.reset_for_new_write)
@@ -52,7 +51,7 @@ class WriteTagsTab(QWidget):
         button_layout.addWidget(self.write_another_button)
         button_layout.addStretch()
         main_layout.addLayout(button_layout)
-        
+
         main_layout.addStretch(1)
         self.update_connection_status()
 
@@ -79,7 +78,6 @@ class WriteTagsTab(QWidget):
         self.config_details_label = QLabel("Configuration not loaded.")
         self.config_details_label.setStyleSheet("font-size: 12px; color: #999999;")
         layout.addWidget(self.config_details_label)
-        # Layout to hold the dynamic usage bars
         self.usage_bars_layout = QVBoxLayout()
         layout.addLayout(self.usage_bars_layout)
         layout.addStretch(1)
@@ -95,28 +93,27 @@ class WriteTagsTab(QWidget):
         self.write_progress_bar = QProgressBar()
         self.write_progress_bar.setRange(0, 100)
         self.write_progress_bar.setTextVisible(False)
-        
+
         layout.addWidget(self.write_process_title)
         layout.addWidget(self.write_process_subtitle)
         layout.addWidget(self.write_progress_bar)
-        
-        # Checklist for steps
+
         self.checklist_labels = {
             "validate": self._create_checklist_item("Validate tag compatibility"),
             "encode": self._create_checklist_item("Encode configuration data"),
             "write": self._create_checklist_item("Write to NFC tag"),
-            "verify": self._create_checklist_item("Verify written data")
+            "verify": self._create_checklist_item("Verify written data"),
         }
         for label in self.checklist_labels.values():
             layout.addWidget(label)
-            
+
         return group_box
 
     def _create_checklist_item(self, text):
         label = QLabel(f"⚪ {text}")
         label.setStyleSheet("font-size: 12px;")
         return label
-        
+
     def _create_group_box_template(self, title, description, icon_path):
         group_box = QGroupBox()
         layout = QVBoxLayout(group_box)
@@ -136,36 +133,24 @@ class WriteTagsTab(QWidget):
 
     # --- Core Logic Methods ---
     def load_config_data(self):
-        """Called when the tab is shown or config is updated."""
         try:
-            # Call the parent's validation method
             is_valid = self.parent.is_entire_config_valid()
-
-            # Set the button's enabled state based ONLY on the validation result
             self.action_button.setEnabled(is_valid)
-            
-            # Add a helpful tooltip to explain why the button might be disabled
-            if not is_valid:
-                self.action_button.setToolTip("Button is disabled because some configuration fields are incomplete or invalid.")
-                self.parent.log("Writing is disabled due to invalid configuration.")
-            else:
-                self.action_button.setToolTip("")
+            self.action_button.setToolTip("" if is_valid else "Configuration invalid, cannot write.")
 
             config = self.parent.get_config()
-            # Use the handler to calculate requirements without starting the process
             temp_handler = MultiCardWriteHandler(self.nfc_handler, config)
-            data_len = len(temp_handler.all_data)
-            num_tags = temp_handler.num_cards
 
-            self.config_details_label.setText(f"<b>Total Data Size:</b> {data_len} bytes | <b>Tags Required:</b> {num_tags}")
+            num_tags = temp_handler.num_cards
+            total_size = sum(len(tag.rstrip(b"\x00")) for tag in temp_handler.tags_data)
+
+            self.config_details_label.setText(f"<b>Total Data Size:</b> {total_size} bytes | <b>Tags Required:</b> {num_tags}")
             self._generate_usage_bars(temp_handler)
-            
         except Exception as e:
             self.config_details_label.setText(f"Error loading configuration: {e}")
             self.action_button.setEnabled(False)
 
     def _generate_usage_bars(self, handler):
-        # Clear previous bars
         while self.usage_bars_layout.count():
             child = self.usage_bars_layout.takeAt(0)
             if child.widget():
@@ -174,69 +159,54 @@ class WriteTagsTab(QWidget):
         if handler.num_cards == 0:
             return
 
-        # Simulate chunking to get data per card
-        remaining_data = handler.all_data
-        for i in range(handler.num_cards):
-            space = 142 if handler.num_cards > 1 else 144
-            
-            # This is a simplified length calculation for visualization
-            chunk_len = min(len(remaining_data) + (2 if handler.num_cards > 1 else 0), space)
-            remaining_data = remaining_data[max(0, space - 2):]
+        for i, tag_data in enumerate(handler.tags_data, start=1):
+            used_bytes = len(tag_data.rstrip(b"\x00"))
+            bar_label = QLabel(f"Tag {i} Usage: {used_bytes} / 144 bytes")
 
-            bar_label = QLabel(f"Tag {i+1} Usage: {chunk_len} / 144 bytes")
-            
             bar_container = QFrame()
             bar_container.setFixedHeight(10)
             bar_container.setStyleSheet("background-color: #e0e0e0; border-radius: 5px;")
-            
+
             bar_fill = QFrame(bar_container)
-            percentage = (chunk_len / 144) * 100
-            bar_fill.setFixedWidth(int(bar_container.width() * (percentage / 100))) # Initial width
+            percentage = (used_bytes / 144) * 100
+            bar_fill.setFixedWidth(int(144 * (percentage / 100)))
             bar_fill.setFixedHeight(10)
             bar_fill.setStyleSheet("background-color: #333333; border-radius: 5px;")
-            
+
             self.usage_bars_layout.addWidget(bar_label)
             self.usage_bars_layout.addWidget(bar_container)
 
     def handle_write_action(self):
-        """Central function for the main action button."""
         if not self.write_handler:
             try:
                 config = self.parent.get_config()
                 self.write_handler = MultiCardWriteHandler(self.nfc_handler, config)
                 self.writing_box.setVisible(True)
-                self.process_single_tag() # Process the first tag automatically
+                self.process_single_tag()
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to start writing process: {str(e)}")
         else:
-            # --- This is a "Write Tag X" or "Return to Home" click ---
             if self.write_handler.current_card >= self.write_handler.num_cards:
-                # "Return to Home" was clicked
-                # You can connect this to your main window's tab switching logic
-                print("Returning to home...") 
-                self.parent.switch_to_home_tab() # Example call
+                self.parent.switch_to_home_tab()
             else:
-                self.process_single_tag() # Process the next tag
+                self.process_single_tag()
 
     def process_single_tag(self):
-        """Writes data to a single tag and updates the UI."""
-        if not self.write_handler: return
+        if not self.write_handler:
+            return
 
         current = self.write_handler.current_card + 1
         total = self.write_handler.num_cards
-        
-        # Update UI for the current tag
+
         self.write_process_title.setText(f"Write Process - Tag {current}")
         self.write_process_subtitle.setText(f"Writing configuration data to tag {current} of {total}.")
-        self.action_button.setEnabled(False) # Disable while processing
+        self.action_button.setEnabled(False)
 
-        # Simulate checklist progress
         self._update_checklist("validate", "done")
         self.write_progress_bar.setValue(25)
         self._update_checklist("encode", "done")
         self.write_progress_bar.setValue(50)
 
-        # The actual write call to the handler
         result = self.write_handler.process_next_card()
 
         if result["status"] == "error":
@@ -244,10 +214,10 @@ class WriteTagsTab(QWidget):
             QMessageBox.critical(self, "Write Error", result["message"])
             self.reset_for_new_write()
             return
-        
+
         self._update_checklist("write", "done")
         self.write_progress_bar.setValue(75)
-        self._update_checklist("verify", "done") # Assuming write success implies verification for now
+        self._update_checklist("verify", "done")
         self.write_progress_bar.setValue(100)
 
         if result["status"] == "finished":
@@ -260,7 +230,6 @@ class WriteTagsTab(QWidget):
         self.action_button.setEnabled(True)
 
     def reset_for_new_write(self):
-        """Resets the UI to its initial state to start another write process."""
         self.write_handler = None
         self.writing_box.setVisible(False)
         self.write_another_button.setVisible(False)
@@ -268,13 +237,13 @@ class WriteTagsTab(QWidget):
         self.write_progress_bar.setValue(0)
         for step in self.checklist_labels:
             self._update_checklist(step, "pending")
-        self.load_config_data() # Reload config details
+        self.load_config_data()
 
     def _update_checklist(self, step, status):
-        """Updates the visual state of a checklist item."""
-        if step not in self.checklist_labels: return
-        
-        text = self.checklist_labels[step].text()[2:] # Get text without icon
+        if step not in self.checklist_labels:
+            return
+
+        text = self.checklist_labels[step].text()[2:]
         if status == "pending":
             self.checklist_labels[step].setText(f"⚪ {text}")
         elif status == "done":
@@ -283,7 +252,6 @@ class WriteTagsTab(QWidget):
             self.checklist_labels[step].setText(f"❌ {text}")
 
     def update_connection_status(self):
-        # This method is unchanged from your original file
         try:
             self.nfc_handler.connect()
             self.connection_status.setText("Connected")
@@ -295,6 +263,5 @@ class WriteTagsTab(QWidget):
             self.reader_detected.setText("No reader detected")
 
     def tab_shown(self):
-        """Public method to be called by the parent when this tab becomes visible."""
         self.update_connection_status()
         self.load_config_data()
