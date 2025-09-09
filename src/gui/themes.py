@@ -114,6 +114,19 @@ QTabBar::tab:selected {
 }
 
 /* ======================
+   Scroll Areas
+   ====================== */
+QScrollArea {
+    background-color: #FFFFFF;
+    border: none;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: #FFFFFF;
+}
+
+
+/* ======================
    Text Display
    ====================== */
 QTextBrowser {

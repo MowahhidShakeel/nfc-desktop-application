@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QPushButton, QGridLayout
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QPushButton, QGridLayout, QScrollArea
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import Qt
 
@@ -6,7 +6,10 @@ class SummaryTab(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        main_layout = QVBoxLayout(self)
+        
+        # --- Scrollable container ---
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
         main_layout.setSpacing(10)
 
         # Title 
@@ -62,8 +65,21 @@ class SummaryTab(QWidget):
         button_layout.addWidget(prev_button, alignment=Qt.AlignmentFlag.AlignLeft)
         button_layout.addStretch()
         button_layout.addWidget(next_button, alignment=Qt.AlignmentFlag.AlignRight)
-        main_layout.addStretch(1) 
+        
+        # main_layout.addStretch(1) 
         main_layout.addLayout(button_layout)
+        
+        # --- Wrap in scroll area ---
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(content_widget)
+        
+        scroll_area.setMinimumHeight(550)   # you choose
+
+        tab_layout = QVBoxLayout(self)
+        tab_layout.addWidget(scroll_area)
+        self.setLayout(tab_layout)
+
  
     # --- Helper Methods to Create Each Box ---
     

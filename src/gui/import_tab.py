@@ -1,12 +1,19 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QTextEdit, QFileDialog, QHBoxLayout, QGroupBox
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QPushButton, QLabel, QTextEdit,
+    QFileDialog, QHBoxLayout, QGroupBox, QScrollArea
+)
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QIcon
 from PyQt6.QtCore import Qt
+
 
 class ImportTab(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        main_layout = QVBoxLayout()
+
+        # === Scrollable container ===
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
         main_layout.setSpacing(10)
 
         # Title
@@ -20,13 +27,12 @@ class ImportTab(QWidget):
 
         # JSON Configuration File Box
         json_box = QGroupBox()
-        json_layout = QVBoxLayout()
-        json_box.setLayout(json_layout)
+        json_layout = QVBoxLayout(json_box)
 
         # Sub-heading with icon
         heading_layout = QHBoxLayout()
         icon_label = QLabel()
-        icon_label.setPixmap(QIcon("src/gui/assets/json_icon.png").pixmap(16, 16))  # Replace with actual icon path
+        icon_label.setPixmap(QIcon("src/gui/assets/json_icon.png").pixmap(16, 16))
         heading_layout.addWidget(icon_label)
 
         sub_heading = QLabel("JSON Configuration File")
@@ -35,17 +41,16 @@ class ImportTab(QWidget):
         heading_layout.addStretch()
         json_layout.addLayout(heading_layout)
 
-        # Faded/grey text below sub-heading
+        # Grey description text
         description = QLabel("Select a previously exported configuration file to import settings.")
         description.setStyleSheet("color: #999999; font-size: 12px;")
         json_layout.addWidget(description)
 
-        # Import & Continue button
+        # Buttons
         import_button = QPushButton("Import && Continue")
         import_button.clicked.connect(self.parent.import_json)
         json_layout.addWidget(import_button)
 
-        # Start New Configuration button
         new_button = QPushButton("Start New Configuration")
         new_button.clicked.connect(self.parent.new_configuration)
         json_layout.addWidget(new_button)
@@ -54,10 +59,9 @@ class ImportTab(QWidget):
 
         # Configuration File Format Box
         format_box = QGroupBox()
-        format_layout = QVBoxLayout()
-        format_box.setLayout(format_layout)
+        format_layout = QVBoxLayout(format_box)
 
-        # Sub-heading with icon
+        # Sub-heading
         format_heading_layout = QHBoxLayout()
         format_sub_heading = QLabel("Configuration File Format")
         format_sub_heading.setStyleSheet("font-size: 16px; font-weight: bold; color: #000000;")
@@ -65,14 +69,12 @@ class ImportTab(QWidget):
         format_heading_layout.addStretch()
         format_layout.addLayout(format_heading_layout)
 
-        # Faded/grey text below sub-heading
+        # Grey description
         format_description = QLabel("Expected JSON structure for import files")
         format_description.setStyleSheet("color: #999999; font-size: 12px;")
         format_layout.addWidget(format_description)
 
-        format_label = QLabel("Configuration File Format")
-        format_layout.addWidget(format_label)
-
+        # Example code
         format_code = QTextEdit()
         format_code.setReadOnly(True)
         format_code.setPlainText(
@@ -100,17 +102,25 @@ class ImportTab(QWidget):
             "    \"dns3\": \"\"\n"
             "  },\n"
             "  \"sntp\": {\n"
-            "    \"server1\": { \"value\": \"0.pool.ntp.org\",\n"
-            "    \"server2\": { \"value\": \"1.pool.ntp.org\",\n"
-            "    \"server3\": { \"value\": \"2.pool.ntp.org\"\n"
+            "    \"server1\": { \"value\": \"0.pool.ntp.org\" },\n"
+            "    \"server2\": { \"value\": \"1.pool.ntp.org\" },\n"
+            "    \"server3\": { \"value\": \"2.pool.ntp.org\" }\n"
             "  }\n}"
         )
         format_code.setStyleSheet("background-color: #F0F0F0; font-family: monospace; font-size: 12px;")
         format_layout.addWidget(format_code)
 
         main_layout.addWidget(format_box)
+        main_layout.addStretch(1)
 
-        self.setLayout(main_layout)
+        # Wrap with scroll area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(content_widget)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(scroll)
+        self.setLayout(layout)
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():

@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGroupBox, QMessageBox
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGroupBox, QMessageBox, QScrollArea
 )
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
@@ -10,7 +10,9 @@ class SntpTab(QWidget):
         super().__init__()
         self.parent = parent
 
-        main_layout = QVBoxLayout()
+        # --- Scrollable container ---
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
         main_layout.setSpacing(10)
 
         # === Title ===
@@ -96,7 +98,14 @@ class SntpTab(QWidget):
         main_layout.addStretch(1)
         main_layout.addLayout(button_layout)
 
-        self.setLayout(main_layout)
+        # --- Wrap in scroll area ---
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(content_widget)
+
+        tab_layout = QVBoxLayout(self)
+        tab_layout.addWidget(scroll_area)
+        self.setLayout(tab_layout)
 
     def create_group_box(self, title, subtitle, icon_path):
         """Creates a styled QGroupBox with title, subtitle, and optional icon."""

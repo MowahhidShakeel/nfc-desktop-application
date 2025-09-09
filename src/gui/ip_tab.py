@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QGroupBox, QMessageBox
+    QGroupBox, QMessageBox, QScrollArea
 )
 from PyQt6.QtCore import Qt, QRectF, QPropertyAnimation, pyqtProperty
 from PyQt6.QtGui import QPixmap, QColor, QPainter
@@ -36,7 +36,7 @@ class ToggleSwitch(QWidget):
 
     def mousePressEvent(self, event):
         self.setChecked(not self._checked, animate=True)
-        self.parentWidget().parentWidget().toggle_dhcp()
+        self.parentWidget().parentWidget().parentWidget().parentWidget().parentWidget().toggle_dhcp()
 
     def getOffset(self):
         return self._offset
@@ -68,7 +68,9 @@ class IpTab(QWidget):
         super().__init__()
         self.parent = parent
 
-        main_layout = QVBoxLayout()
+        # === Scrollable container ===
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
         main_layout.setSpacing(10)
 
         # === Title ===
@@ -182,8 +184,16 @@ class IpTab(QWidget):
 
         main_layout.addStretch(1)
         main_layout.addLayout(button_layout)
-
-        self.setLayout(main_layout)
+        
+        # === Scroll Area ===
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(content_widget)
+        
+        # Tab layout
+        tab_layout = QVBoxLayout(self)
+        tab_layout.addWidget(scroll_area)
+        self.setLayout(tab_layout)
 
         # Ensure layout matches toggle when changing tabs
         self.parent.tabs.currentChanged.connect(self.sync_dhcp_layout)

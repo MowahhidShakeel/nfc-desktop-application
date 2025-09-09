@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QPushButton, QMessageBox, QFrame, QProgressBar
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QPushButton, QMessageBox, QFrame, QProgressBar, QScrollArea
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 
@@ -12,7 +12,9 @@ class WriteTagsTab(QWidget):
         self.nfc_handler = nfc_handler
         self.write_handler = None
 
-        main_layout = QVBoxLayout(self)
+        # --- Scrollable container ---
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
         main_layout.setSpacing(10)
 
         # --- Title and NFC Reader Status ---
@@ -53,6 +55,17 @@ class WriteTagsTab(QWidget):
         main_layout.addLayout(button_layout)
 
         main_layout.addStretch(1)
+        
+        # --- Wrap in scroll area ---
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(content_widget)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(scroll_area)
+        self.setLayout(layout)
+
+        # Initialize connection status
         self.update_connection_status()
 
     # --- UI Creation Helper Methods ---

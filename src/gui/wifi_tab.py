@@ -1,19 +1,23 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QGroupBox, QComboBox, QCheckBox
+    QPushButton, QGroupBox, QComboBox, QCheckBox, QScrollArea
 )
-from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
+
 
 class WifiTab(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
         self.valid = True
-        main_layout = QVBoxLayout()
+
+        # === Scrollable container ===
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
         main_layout.setSpacing(10)
 
-        # === Title ===
+        # Title
         title_label = QLabel("WiFi Configuration")
         title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 0;")
         main_layout.addWidget(title_label)
@@ -28,7 +32,6 @@ class WifiTab(QWidget):
             "Enter the WiFi network name and authentication details.",
             "src/gui/assets/wifi_icon.png"
         )
-
         group_layout = self.network_group.layout()
 
         # Security Type
@@ -53,42 +56,34 @@ class WifiTab(QWidget):
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.password.setPlaceholderText("Enter Wi-Fi password")
         self.set_field_style(self.password)
+        group_layout.addWidget(self.password)
+
+        # Show password toggle
+        self.show_password_checkbox = QCheckBox("Show Password")
+        self.show_password_checkbox.stateChanged.connect(self.toggle_password_visibility)
+        group_layout.addWidget(self.show_password_checkbox)
 
         main_layout.addWidget(self.network_group)
 
-        # Checkbox to toggle show/hide
-        self.show_password_checkbox = QCheckBox("Show Password")
-        self.show_password_checkbox.stateChanged.connect(self.toggle_password_visibility)
-
-
-        # Add stretch to push button to the right
-        group_layout.addStretch()
-        group_layout.addWidget(self.password)
-        group_layout.addWidget(self.show_password_checkbox)
-
-        # === Enterprise Settings Group (Hidden initially) ===
+        # === Enterprise Settings Group ===
         self.enterprise_group = self.create_group_box(
             "Enterprise Settings",
             "Additional settings for WPA2 Enterprise networks.",
             "src/gui/assets/enterprise_icon.png"
         )
-
         enterprise_layout = self.enterprise_group.layout()
 
-        # Enterprise Mode
         enterprise_layout.addWidget(QLabel("Authentication Mode:"))
         self.enterprise_mode = QComboBox()
-        self.enterprise_mode.addItems(["","EAP-TLS", "EAP-PEAP", "EAP-TTLS"])
+        self.enterprise_mode.addItems(["", "EAP-TLS", "EAP-PEAP", "EAP-TTLS"])
         enterprise_layout.addWidget(self.enterprise_mode)
 
-        # Identity
         enterprise_layout.addWidget(QLabel("Identity"))
         self.enterprise_identity = QLineEdit()
         self.set_field_style(self.enterprise_identity)
         self.enterprise_identity.setPlaceholderText("user@domain.com")
         enterprise_layout.addWidget(self.enterprise_identity)
 
-        # Username
         enterprise_layout.addWidget(QLabel("Username"))
         self.enterprise_username = QLineEdit()
         self.set_field_style(self.enterprise_username)
@@ -132,23 +127,22 @@ class WifiTab(QWidget):
         button_layout.addWidget(prev_button, alignment=Qt.AlignmentFlag.AlignLeft)
         button_layout.addStretch()
         button_layout.addWidget(next_button, alignment=Qt.AlignmentFlag.AlignRight)
-        main_layout.addStretch(1) 
+
+        main_layout.addStretch(1)
         main_layout.addLayout(button_layout)
 
-        self.setLayout(main_layout)
+        # Wrap in scroll area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(content_widget)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(scroll)
+        self.setLayout(layout)
 
     def create_group_box(self, title, subtitle, icon_path):
-        """Creates a styled QGroupBox with title, subtitle, and optional icon."""
         group_box = QGroupBox()
-        group_box.setStyleSheet("""
-            QGroupBox {
-                border: 1px solid #CCCCCC;
-                border-radius: 4px;
-                margin-top: 10px;
-                padding: 10px;
-            }
-        """)
-        layout = QVBoxLayout()
+        layout = QVBoxLayout(group_box)
         layout.setSpacing(6)
         layout.setContentsMargins(8, 8, 8, 8)
 
@@ -171,11 +165,9 @@ class WifiTab(QWidget):
         subtitle_label.setStyleSheet("color: grey; font-size: 12px; margin: 0;")
         layout.addWidget(subtitle_label)
 
-        group_box.setLayout(layout)
         return group_box
 
     def set_field_style(self, widget):
-        """Adds focus highlighting style to QLineEdit."""
         widget.setStyleSheet("""
             QLineEdit {
                 border: 1px solid #CCCCCC;
@@ -188,32 +180,25 @@ class WifiTab(QWidget):
         """)
 
     def toggle_enterprise_section(self, value):
-        """Show or hide enterprise section based on security type."""
         self.enterprise_group.setVisible(value == "WPA2 Enterprise")
 
     def toggle_password_visibility(self, state):
-        """Show/hide the password based on checkbox value """
         if state == Qt.CheckState.Checked.value:
-            self.password.setEchoMode(QLineEdit.EchoMode.Normal)  
+            self.password.setEchoMode(QLineEdit.EchoMode.Normal)
         else:
-            self.password.setEchoMode(QLineEdit.EchoMode.Password)  
-        
+            self.password.setEchoMode(QLineEdit.EchoMode.Password)
+
     def next_clicked(self):
-        """Check valid inputs and navigate to next tab if valid"""
-        if (self.is_valid()):
+        if self.is_valid():
             self.parent.tabs.setCurrentIndex(2)
-         
+
     def is_valid(self):
-        """Validates required fields."""
         errors = []
         self.clear_error_styles()
-
-        # SSID always required
         if not self.ssid.text().strip():
-            errors.append(("SSID (Network Name) *", self.ssid))
-
+            errors.append(self.ssid)
         if errors:
-            for field_name, widget in errors:
+            for widget in errors:
                 widget.setStyleSheet("""
                     QLineEdit {
                         border: 1px solid red;
@@ -221,14 +206,9 @@ class WifiTab(QWidget):
                         padding: 4px;
                     }
                 """)
-            
-            self.parent.log("Add Wifi error message here")
-
+            self.parent.log("SSID is required", level="ERROR")
             return False
-        
-        # If everything is valid, go to next tab
         return True
 
     def clear_error_styles(self):
-        """Reset all field styles."""
         self.set_field_style(self.ssid)

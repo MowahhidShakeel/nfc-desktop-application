@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox,
-    QPushButton, QGroupBox, QMessageBox
+    QPushButton, QGroupBox, QMessageBox, QScrollArea
 )
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
@@ -11,7 +11,9 @@ class MqttTab(QWidget):
         super().__init__()
         self.parent = parent
 
-        main_layout = QVBoxLayout()
+        # === Scrollable container ===
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
         main_layout.setSpacing(10)
 
         #  Title 
@@ -107,10 +109,18 @@ class MqttTab(QWidget):
         button_layout.addStretch()
         button_layout.addWidget(next_button, alignment=Qt.AlignmentFlag.AlignRight)
 
-        main_layout.addStretch(1)
+        main_layout.addStretch(1)  # keeps buttons pinned to bottom
         main_layout.addLayout(button_layout)
 
-        self.setLayout(main_layout)
+        # === Scroll Area ===
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(content_widget)
+
+        # Tab layout
+        tab_layout = QVBoxLayout(self)
+        tab_layout.addWidget(scroll_area)
+        self.setLayout(tab_layout)
 
     # Helper UI Methods
     def create_group_box(self, title, subtitle, icon_path):
