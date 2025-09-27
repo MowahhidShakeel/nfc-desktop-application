@@ -101,7 +101,7 @@ class IpTab(QWidget):
         ip_layout.addLayout(toggle_row)
 
         # Static IP Fields
-        self.static_ip_label = QLabel("IPv4 Address *")
+        self.static_ip_label = QLabel("IPv4 Address")
         self.static_ip = QLineEdit()
         self.static_ip.setPlaceholderText("e.g. 192.168.1.100")
         self.set_field_style(self.static_ip)
@@ -284,12 +284,15 @@ class IpTab(QWidget):
         
         # If DHCP is enabled, clear all other parameters
         if (enabled == True):
+            self.parent.log("[IP] DHCP enabled.", level="INFO")
             self.static_ip.clear()
             self.netmask.clear()
             self.gateway.clear()
             self.dns1.clear()
             self.dns2.clear()
-            self.dns3.clear()    
+            self.dns3.clear()  
+        else:
+            self.parent.log("[IP] Static IP mode enabled.", level="INFO")  
         
         
     def sync_dhcp_layout(self, index):
@@ -300,25 +303,29 @@ class IpTab(QWidget):
         errors = []
         self.clear_error_styles()
 
-        # Check parameters if DHCP is enabled
+        # Only validate if DHCP is disabled
         if not self.dhcp_toggle.isChecked():
-            # Make sure it follows the IPv4 address format
-            if not self.is_valid_ip(self.static_ip.text()):
-                errors.append(("IPv4 Address *", self.static_ip))
-            # If netmask is non-empty (optional value)
-            if (self.netmask.text().strip()):
-                if not self.netmask.text().strip().isdigit() or not (0 <= int(self.netmask.text()) <= 32):
-                    errors.append(("Netmask/CIDR *", self.netmask))
-            # If gateway address is non-empty (optional value)
-            if self.gateway.text().strip() and not self.is_valid_ip(self.gateway.text()):
-                errors.append(("Default Gateway *", self.gateway))
-            # If DNS1 is non-empty (optional value)
-            if (self.dns1.text().strip()) and not self.is_valid_ip(self.dns1.text()):
-                errors.append(("Primary DNS Server *", self.dns1))
+            # IPv4 address (optional)
+            if self.static_ip.text().strip() and not self.is_valid_ip(self.static_ip.text()):
+                errors.append(("IPv4 Address", self.static_ip))
 
-            for dns_field in [self.dns2, self.dns3]:
-                if dns_field.text().strip() and not self.is_valid_ip(dns_field.text()):
-                    errors.append(("DNS Server", dns_field))
+            # Netmask (optional, must be 0–32 if provided)
+            if self.netmask.text().strip():
+                if not self.netmask.text().strip().isdigit() or not (0 <= int(self.netmask.text()) <= 32):
+                    errors.append(("Netmask/CIDR", self.netmask))
+
+            # Gateway (optional)
+            if self.gateway.text().strip() and not self.is_valid_ip(self.gateway.text()):
+                errors.append(("Default Gateway", self.gateway))
+
+            # DNS1–3 (all optional, validate if filled)
+            for label, field in [
+                ("Primary DNS Server", self.dns1),
+                ("Secondary DNS Server", self.dns2),
+                ("Tertiary DNS Server", self.dns3),
+            ]:
+                if field.text().strip() and not self.is_valid_ip(field.text()):
+                    errors.append((label, field))
 
         if errors:
             for field_name, widget in errors:
@@ -331,9 +338,9 @@ class IpTab(QWidget):
                 """)
                 
                 self.parent.log(f"IP Tab Validation Error: {field_name} is invalid or missing", level="ERROR")
-
             return False
 
+        self.parent.log(f"[IP] Configuration validated successfully.", level="INFO")
         return True
     
     def next_clicked(self):

@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 
-
 class MqttTab(QWidget):
     def __init__(self, parent):
         super().__init__()
@@ -200,8 +199,10 @@ class MqttTab(QWidget):
                         padding: 4px;
                     }
                 """)
-            self.parent.log("Add MQTT error message here")
+            self.parent.log(f"[MQTT] Validation error", level="ERROR")
             return False
+        
+        self.parent.log(f"[MQTT] Broker configuration validated successfully.", level="INFO")
         return True
 
     def next_clicked(self):

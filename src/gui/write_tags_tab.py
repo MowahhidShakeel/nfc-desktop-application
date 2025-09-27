@@ -220,6 +220,7 @@ class WriteTagsTab(QWidget):
                 self.writing_box.setVisible(True)
                 self.process_single_tag() # Process the first tag automatically
             except Exception as e:
+                self.parent.log(f"Failed to start writing process: {e}", level="ERROR")
                 QMessageBox.critical(self, "Error", f"Failed to start writing process: {str(e)}")
         else:
             # --- This is a "Write Tag X" or "Return to Home" click ---
@@ -229,6 +230,7 @@ class WriteTagsTab(QWidget):
                 print("Returning to home...") 
                 self.parent.switch_to_home_tab() # Example call
             else:
+                self.parent.log(f"Continuing to next NFC tag...", level="INFO")
                 self.process_single_tag() # Process the next tag
 
     def process_single_tag(self):
@@ -258,12 +260,14 @@ class WriteTagsTab(QWidget):
             self.reset_for_new_write()
             return
         
+        self.parent.log(f"Write successful for Tag {current}", level="INFO")
         self._update_checklist("write", "done")
         self.write_progress_bar.setValue(75)
         self._update_checklist("verify", "done") # Assuming write success implies verification for now
         self.write_progress_bar.setValue(100)
 
         if result["status"] == "finished":
+            self.parent.log("All tags written successfully.", level="INFO")
             self.action_button.setText("Return to Home")
             self.write_another_button.setVisible(True)
         else:

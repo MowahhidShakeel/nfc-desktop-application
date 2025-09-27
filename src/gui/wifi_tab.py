@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 
-
 class WifiTab(QWidget):
     def __init__(self, parent):
         super().__init__()
@@ -180,7 +179,9 @@ class WifiTab(QWidget):
         """)
 
     def toggle_enterprise_section(self, value):
-        self.enterprise_group.setVisible(value == "WPA2 Enterprise")
+        if value == "WPA2 Enterprise":
+            self.parent.log("[WIFI] Enterprise security selected.", level="INFO")
+            self.enterprise_group.setVisible(True)
 
     def toggle_password_visibility(self, state):
         if state == Qt.CheckState.Checked.value:
@@ -190,6 +191,7 @@ class WifiTab(QWidget):
 
     def next_clicked(self):
         if self.is_valid():
+            self.parent.log(f"[WIFI] SSID '{self.ssid.text().strip()}' accepted.", level="INFO")
             self.parent.tabs.setCurrentIndex(2)
 
     def is_valid(self):
@@ -206,8 +208,10 @@ class WifiTab(QWidget):
                         padding: 4px;
                     }
                 """)
-            self.parent.log("SSID is required", level="ERROR")
+            self.parent.log("[WIFI] Validation error: SSID cannot be empty.", level="ERROR")
             return False
+        
+        self.parent.log("[WIFI] WiFi configuration validated successfully.", level="INFO")
         return True
 
     def clear_error_styles(self):

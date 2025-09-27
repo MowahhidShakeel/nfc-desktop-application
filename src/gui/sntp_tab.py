@@ -34,7 +34,7 @@ class SntpTab(QWidget):
         group_layout = self.time_servers_group.layout()
 
         # Primary SNTP Server (Required)
-        group_layout.addWidget(QLabel("Primary SNTP Server *"))
+        group_layout.addWidget(QLabel("Primary SNTP Server"))
         self.primary_server = QLineEdit()
         self.set_field_style(self.primary_server)
         self.primary_server.setText("0.pool.ntp.org")
@@ -162,15 +162,15 @@ class SntpTab(QWidget):
         errors = []
         self.clear_error_styles()
 
-        if not self.primary_server.text().strip():
-            errors.append(("Primary SNTP Server *", self.primary_server))
-        elif not self.is_valid_hostname_or_ip(self.primary_server.text().strip()):
-            errors.append(("Primary SNTP Server * (invalid format)", self.primary_server))
+        # Primary server (optional, validate if provided)
+        if self.primary_server.text().strip() and not self.is_valid_hostname_or_ip(self.primary_server.text().strip()):
+            errors.append(("Primary SNTP Server (invalid format)", self.primary_server))
 
-        # Secondary/Tertiary are optional but validate if not empty
+        # Secondary server (optional)
         if self.secondary_server.text().strip() and not self.is_valid_hostname_or_ip(self.secondary_server.text().strip()):
             errors.append(("Secondary SNTP Server (invalid format)", self.secondary_server))
 
+        # Tertiary server (optional)
         if self.tertiary_server.text().strip() and not self.is_valid_hostname_or_ip(self.tertiary_server.text().strip()):
             errors.append(("Tertiary SNTP Server (invalid format)", self.tertiary_server))
 
@@ -188,7 +188,7 @@ class SntpTab(QWidget):
                 self.parent.log(f"Validation error: {field_name}", level="ERROR")
             return False
 
-        self.parent.log("SNTP settings validated successfully.")
+        self.parent.log("[SNTP] Settings validated successfully.", level="INFO")
         return True
 
     def next_clicked(self):

@@ -125,20 +125,25 @@ class ReadTagsTab(QWidget):
         result = self.read_handler.process_next_card()
         
         if result["status"] == "error":
+            self.parent.log(f"Read error: {result['message']}", level="ERROR")
             QMessageBox.critical(self, "Read Error", result["message"])
             self.reset_for_new_read()
             return
     
         self.cards_scanned += 1
         
+        self.parent.log(f"Card {self.cards_scanned} read successfully.", level="INFO")
+        
         # Add a label showing the read card number
         size_label = QLabel(f"✅ Card {self.cards_scanned}: Data read successfully.")
         self.read_details_layout.addWidget(size_label)
 
         if result["status"] == "in_progress":
+            self.parent.log("Waiting for next NFC card...", level="DEBUG")
             self.action_button.setEnabled(True)
 
         elif result["status"] == "finished":
+            self.parent.log("All NFC cards read successfully. Assembling configuration.", level="INFO")
             self.read_status_label.setText(result["message"])
             final_config = result["config"]
             

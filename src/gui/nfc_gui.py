@@ -15,6 +15,7 @@ from src.gui.themes import STYLESHEET
 from src.version import APP_NAME, APP_VERSION
 import sys, os
 import json
+from datetime import datetime
 
 def resource_path(relative_path):
     """ Get absolute path to resource (for PyInstaller and dev). """
@@ -105,11 +106,22 @@ class NFCWindow(QMainWindow):
 
     def log(self, message, level="INFO"):
         """Append message to the log area and file."""
-        self.log_area.append(message)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        formatted = f"{timestamp} - [{level}] - {message}"
+
+        # Show in UI
+        self.log_area.append(formatted)
+        QApplication.processEvents()
+    
+        # Write to file via Python logging
         if level == "INFO":
             self.logger.info(message)
         elif level == "ERROR":
             self.logger.error(message)
+        elif level == "DEBUG":
+            self.logger.debug(message)
+        elif level == "WARNING":
+            self.logger.warning(message)
 
     def connect_reader(self):
         """Connect to the NFC reader."""
@@ -180,7 +192,7 @@ class NFCWindow(QMainWindow):
 
             self.tabs.setTabEnabled(1, True)
             self.tabs.setCurrentWidget(self.wifi_tab)
-            self.log("New configuration created")
+            self.log("New configuration created", level="INFO")
             self.update_summary()
         except Exception as e:
             self.log(f"New config error: {e}", level="ERROR")
@@ -193,7 +205,7 @@ class NFCWindow(QMainWindow):
                 return
             config = self.nfc.read_config()
             self.set_config(config)
-            self.log("Read configuration from NFC tag")
+            self.log("Read configuration from NFC tag", level="INFO")
             self.tabs.setCurrentWidget(self.summary_tab)
         except Exception as e:
             self.log(f"Read NFC error: {e}", level="ERROR")
@@ -206,7 +218,7 @@ class NFCWindow(QMainWindow):
                 return
             config = self.get_config()
             self.nfc.write_full_config(config)
-            self.log("Wrote configuration to NFC tag")
+            self.log("Successfully wrote configuration to NFC tag", level="INFO")
         except Exception as e:
             self.log(f"Write NFC error: {e}", level="ERROR")
 
@@ -312,7 +324,7 @@ class NFCWindow(QMainWindow):
         """Handle window close event to disconnect reader."""
         if self.is_connected:
             self.nfc.connection.disconnect()
-            self.log("Disconnected from reader")
+            self.log("Disconnected from reader", level="ERROR")
         event.accept()
         
     def is_entire_config_valid(self):

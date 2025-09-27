@@ -5,7 +5,7 @@ import os
 def setup_logger():
     """Configure the logging system."""
     logger = logging.getLogger('NFCApp')
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     # Use user's AppData folder for logs
     appdata_dir = os.path.join(os.environ.get("APPDATA", os.getcwd()), "ElixionNiviu", "logs")
@@ -19,7 +19,7 @@ def setup_logger():
         backupCount=3,
         encoding="utf-8"
     )
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     file_formatter = logging.Formatter(
         '%(asctime)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
