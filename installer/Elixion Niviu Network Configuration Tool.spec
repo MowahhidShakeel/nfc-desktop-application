@@ -1,11 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
+import sys, os
 
+# Project root is one level up from "installer"
+sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "")))
+
+from src.version import APP_NAME, APP_VERSION
 
 a = Analysis(
     ['../src/main.py'],
     pathex=[],
     binaries=[],
-    datas=[('../src/gui/assets', '_internal/assets')],
+    datas=[
+        ('../src/gui/assets', '_internal/assets'),
+        ('../resources/elixion_medical.ico', 'resources'),
+    ],
     hiddenimports=['PyQt6'],
     hookspath=[],
     hooksconfig={},
@@ -21,7 +29,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Elixion Niviu Network Configuration Tool',
+    name=f"{APP_NAME} v{APP_VERSION}",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -41,5 +49,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Elixion Niviu Network Configuration Tool',
+    name=f"{APP_NAME}",
 )

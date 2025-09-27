@@ -12,13 +12,21 @@ from src.gui.read_tags_tab import ReadTagsTab
 from src.core.nfc_handler import NFCHandler
 from src.core.logging_config import setup_logger
 from src.gui.themes import STYLESHEET
-import sys
+from src.version import APP_NAME, APP_VERSION
+import sys, os
 import json
+
+def resource_path(relative_path):
+    """ Get absolute path to resource (for PyInstaller and dev). """
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 class NFCWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Elixion Niviu Network Configuration Tool")
+        self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
+        self.setWindowIcon(QIcon(resource_path("resources/elixion_medical.ico")))
         
         # Screen-aware sizing
         screen = QApplication.primaryScreen().availableGeometry()
