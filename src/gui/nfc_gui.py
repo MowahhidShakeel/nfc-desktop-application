@@ -92,7 +92,7 @@ class NFCWindow(QMainWindow):
         self.splitter = QSplitter(Qt.Orientation.Vertical)
         self.splitter.addWidget(self.tabs)
         self.splitter.addWidget(self.log_area)
-        self.splitter.setSizes([800, 200])  # initial ratio
+        self.splitter.setSizes([600, 400])  # initial ratio
         main_layout.addWidget(self.splitter)
 
         # Set up central widget

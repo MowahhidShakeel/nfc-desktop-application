@@ -137,6 +137,18 @@ QTextBrowser {
 }
 
 /* ======================
+   Message Boxes
+   ====================== */
+QMessageBox {
+    background-color: #FFFFFF;
+    color: #000000;
+}
+
+QMessageBox QLabel {
+    color: #000000;
+}
+
+/* ======================
    Group Boxes
    ====================== */
 QGroupBox {
