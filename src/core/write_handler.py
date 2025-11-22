@@ -34,6 +34,16 @@ class MultiCardWriteHandler:
                 mode_map = {"": 0xFF, "EAP-TLS": 0x00, "EAP-PEAP": 0x01, "EAP-TTLS": 0x02}
                 mode = mode_map.get(wifi["enterpriseMode"], 0xFF)
                 records.append((0x86, bytes([mode])))
+            if wifi.get("securityMode"):
+                sec_map = {
+                    "": 0x00,
+                    "Don't use certificates": 0x00,
+                    "Send client certificate": 0x01,
+                    "Verify server certificate": 0x02,
+                    "Send client certificate + verify server certificate": 0x03,
+                }
+                sec = sec_map.get(wifi["securityMode"], 0x00)
+                records.append((0x87, bytes([sec])))
         
         # MQTT records
         if self.config.get("mqtt"):

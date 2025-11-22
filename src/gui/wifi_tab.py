@@ -76,6 +76,17 @@ class WifiTab(QWidget):
         self.enterprise_mode = QComboBox()
         self.enterprise_mode.addItems(["", "EAP-TLS", "EAP-PEAP", "EAP-TTLS"])
         enterprise_layout.addWidget(self.enterprise_mode)
+        
+        enterprise_layout.addWidget(QLabel("Security Mode:"))
+        self.security_mode = QComboBox()
+        self.security_mode.addItems([
+            "", 
+            "Don't use certificates", 
+            "Send client certificate", 
+            "Verify server certificate", 
+            "Send client certificate + verify server certificate"
+        ])
+        enterprise_layout.addWidget(self.security_mode)
 
         enterprise_layout.addWidget(QLabel("Identity"))
         self.enterprise_identity = QLineEdit()
@@ -182,6 +193,8 @@ class WifiTab(QWidget):
         if value == "WPA2 Enterprise":
             self.parent.log("[WIFI] Enterprise security selected.", level="INFO")
             self.enterprise_group.setVisible(True)
+        else:
+            self.enterprise_group.setVisible(False)
 
     def toggle_password_visibility(self, state):
         if state == Qt.CheckState.Checked.value:

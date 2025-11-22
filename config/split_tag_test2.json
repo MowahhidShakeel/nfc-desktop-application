@@ -3,6 +3,7 @@
     "ssid": "VeryLongSSIDThatExceedsNormalLim",
     "password": "VerySecurePassword1234567890abcde",
     "enterpriseMode": "EAP-TTLS",
+    "securityMode": "Send client certificate + verify server certificate",
     "enterpriseIdentity": "user@longdomain.com1234567890",
     "enterpriseUsername": "user1234567890"
   },
@@ -22,13 +23,13 @@
   },
   "sntp": {
     "server1": {
-      "value": "time1.very.long.domain.name123"
+      "value": "time1.very.long.domain.name"
     },
     "server2": {
-      "value": "time2.very.long.domain.name123"
+      "value": "time2.very.long.domain.name"
     },
     "server3": {
-      "value": "time3.very.long.domain.name123"
+      "value": "time3.very.long.domain.name"
     }
   }
 }

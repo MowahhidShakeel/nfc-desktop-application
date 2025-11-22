@@ -3,6 +3,7 @@
     "ssid": "TestNetwork",
     "password": "testpass123",
     "enterpriseMode": 255,
+    "securityMode": "",
     "enterpriseIdentity": "",
     "enterpriseUsername": ""
   },
@@ -23,17 +24,8 @@
     "dns3": ""
   },
   "sntp": {
-    "server1": {
-      "value": "0.pool.ntp.org",
-      "type": "hostname"
-    },
-    "server2": {
-      "value": "1.pool.ntp.org",
-      "type": "hostname"
-    },
-    "server3": {
-      "value": "2.pool.ntp.org",
-      "type": "hostname"
-    }
+    "server1": {"value": "0.pool.ntp.org", "type": "hostname"},
+    "server2": {"value": "1.pool.ntp.org", "type": "hostname"},
+    "server3": {"value": "2.pool.ntp.org", "type": "hostname"}
   }
 }

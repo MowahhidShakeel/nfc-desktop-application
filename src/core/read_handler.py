@@ -92,7 +92,37 @@ class MultiCardReadHandler:
 
     def _build_final_config(self):
         """Builds the final config dictionary from all accumulated records."""
-        config = {"wifi": {}, "mqtt": {}, "ip": {}, "sntp": {}}
+        config = {
+            "wifi": {
+                "ssid": "",
+                "password": "",
+                "enterpriseMode": "",
+                "securityMode": "",
+                "enterpriseIdentity": "",
+                "enterpriseUsername": ""
+            },
+            "mqtt": {
+                "host": "",
+                "username": "",
+                "password": "",
+                "hostType": "",
+                "port": 1883
+            },
+            "ip": {
+                "dhcpEnabled": True,
+                "ipAddress": "",
+                "netmask": 24,
+                "gateway": "",
+                "dns1": "",
+                "dns2": "",
+                "dns3": ""
+            },
+            "sntp": {
+                "server1": {"value": "", "type": "hostname"},
+                "server2": {"value": "", "type": "hostname"},
+                "server3": {"value": "", "type": "hostname"}
+            }
+        }
         ip_values = {}
         has_ip_data = False
         
@@ -103,7 +133,20 @@ class MultiCardReadHandler:
                 elif key_id == 0x03: config["wifi"]["enterpriseIdentity"] = value
                 elif key_id == 0x04: config["wifi"]["enterpriseUsername"] = value
                 elif key_id == 0x05: config["wifi"]["password"] = value
-                elif key_id == 0x06: config["wifi"]["enterpriseMode"] = {0x00: "EAP-TLS", 0x01: "EAP-PEAP", 0x02: "EAP-TTLS", 0xFF: ""}.get(value, "")
+                elif key_id == 0x06:
+                    config["wifi"]["enterpriseMode"] = {
+                        0x00: "EAP-TLS",
+                        0x01: "EAP-PEAP",
+                        0x02: "EAP-TTLS",
+                        0xFF: ""
+                    }.get(value, "")
+                elif key_id == 0x07:
+                    config["wifi"]["securityMode"] = {
+                        0x00: "Don't use certificates",
+                        0x01: "Send client certificate",
+                        0x02: "Verify server certificate",
+                        0x03: "Send client certificate + verify server certificate"
+                    }.get(value, "")
                 elif key_id == 0x10 or key_id == 0x50: config["mqtt"]["host"] = value
                 elif key_id == 0x11: config["mqtt"]["username"] = value
                 elif key_id == 0x12: config["mqtt"]["password"] = value

@@ -104,6 +104,15 @@ class NFCWindow(QMainWindow):
         if self.nfc.reader is None:
             self.log("No NFC reader detected or Smart Card service not running", level="ERROR")
 
+    def switch_to_home_tab(self):
+        """Switch back to the Summary tab after writing tags."""
+        try:
+            # Switch to Summary tab (index may vary depending on your tab order)
+            self.tabs.setCurrentWidget(self.import_tab)
+            self.log("Returned to Summary tab.", level="INFO")
+        except Exception as e:
+            self.log(f"Failed to switch to home tab: {e}", level="ERROR")
+
     def log(self, message, level="INFO"):
         """Append message to the log area and file."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -174,6 +183,7 @@ class NFCWindow(QMainWindow):
             self.wifi_tab.ssid.clear()
             self.wifi_tab.password.clear()
             self.wifi_tab.enterprise_mode.setCurrentIndex(0)
+            self.wifi_tab.security_mode.setCurrentIndex(0)
             self.wifi_tab.enterprise_identity.clear()
             self.wifi_tab.enterprise_username.clear()
             self.mqtt_tab.host.clear()
@@ -230,7 +240,8 @@ class NFCWindow(QMainWindow):
                 "password": self.wifi_tab.password.text(),
                 "enterpriseMode": self.wifi_tab.enterprise_mode.currentText(),
                 "enterpriseIdentity": self.wifi_tab.enterprise_identity.text(),
-                "enterpriseUsername": self.wifi_tab.enterprise_username.text()
+                "enterpriseUsername": self.wifi_tab.enterprise_username.text(),
+                "securityMode": self.wifi_tab.security_mode.currentText(),
             },
             "mqtt": {
                 "host": self.mqtt_tab.host.text(),
@@ -266,6 +277,7 @@ class NFCWindow(QMainWindow):
         else:  # If stored as text
             self.wifi_tab.enterprise_mode.setCurrentText(config["wifi"].get("enterpriseMode", ""))
 
+        self.wifi_tab.security_mode.setCurrentText(config["wifi"].get("securityMode", ""))
         self.wifi_tab.enterprise_identity.setText(config["wifi"].get("enterpriseIdentity", ""))
         self.wifi_tab.enterprise_username.setText(config["wifi"].get("enterpriseUsername", ""))
 
@@ -300,6 +312,7 @@ class NFCWindow(QMainWindow):
             self.summary_tab.wifi_identity.setText(f"Identity: {self.wifi_tab.enterprise_identity.text() or 'Not set'}")
             self.summary_tab.wifi_username.setText(f"Username: {self.wifi_tab.enterprise_username.text() or 'Not set'}")
             self.summary_tab.wifi_authentication.setText(f"Authentication Mode: {self.wifi_tab.enterprise_mode.currentText() or 'Not set'}")
+            self.summary_tab.wifi_security_mode.setText(f"Security Mode:  {self.wifi_tab.security_mode.currentText() or 'Not set'}")
 
         # --- MQTT ---
         self.summary_tab.mqtt_host.setText(f"Host: {self.mqtt_tab.host.text() or 'Not set'}")

@@ -82,7 +82,8 @@ class ImportTab(QWidget):
             "  \"wifi\": {\n"
             "    \"ssid\": \"NetworkName\",\n"
             "    \"password\": \"password123\",\n"
-            "    \"enterpriseMode\": 255,\n"
+            "    \"enterpriseMode\": \"EAP-TTLS\",\n"
+            "    \"securityMode\": \"Verify server certificate\",\n"
             "    \"enterpriseIdentity\": \"\",\n"
             "    \"enterpriseUsername\": \"\"\n"
             "  },\n"
@@ -105,7 +106,8 @@ class ImportTab(QWidget):
             "    \"server1\": { \"value\": \"0.pool.ntp.org\" },\n"
             "    \"server2\": { \"value\": \"1.pool.ntp.org\" },\n"
             "    \"server3\": { \"value\": \"2.pool.ntp.org\" }\n"
-            "  }\n}"
+            "  }\n"
+            "}"
         )
         format_code.setStyleSheet("background-color: #F0F0F0; font-family: monospace; font-size: 12px;")
         format_layout.addWidget(format_code)
