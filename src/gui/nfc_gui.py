@@ -227,7 +227,6 @@ class NFCWindow(QMainWindow):
                 return
             config = self.get_config()
             self.nfc.write_full_config(config)
-            print("wrote")
             self.log("Successfully wrote configuration to NFC tag", level="INFO")
         except Exception as e:
             self.log(f"Write NFC error: {e}", level="ERROR")

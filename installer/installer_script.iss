@@ -2,12 +2,12 @@
 
 [Setup]
 AppName=Elixion Niviu Network Configuration Tool
-AppVersion=0.5.3
+AppVersion=0.5.4
 DefaultDirName={autopf}\Elixion Niviu Network Configuration Tool
 DefaultGroupName=Elixion Niviu
 UninstallDisplayIcon={app}\Elixion Niviu Network Configuration Tool.exe
 OutputDir=installer
-OutputBaseFilename=elixion-niviu-setup-0.5.3
+OutputBaseFilename=elixion-niviu-setup-0.5.4
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -19,8 +19,8 @@ Source: "driver\*"; DestDir: "{tmp}\driver"; Flags: recursesubdirs createallsubd
 Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]
-Name: "{group}\Elixion Niviu v0.5.3"; Filename: "{app}\Elixion Niviu Network Configuration Tool v0.5.3.exe"
-Name: "{autodesktop}\Elixion Niviu v0.5.3"; Filename: "{app}\Elixion Niviu Network Configuration Tool v0.5.3.exe"; Tasks: desktopicon
+Name: "{group}\Elixion Niviu v0.5.4"; Filename: "{app}\Elixion Niviu Network Configuration Tool v0.5.4.exe"
+Name: "{autodesktop}\Elixion Niviu v0.5.4"; Filename: "{app}\Elixion Niviu Network Configuration Tool v0.5.4.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}";
@@ -32,7 +32,7 @@ Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; S
 Filename: "{tmp}\driver\Setup.exe"; StatusMsg: "Installing NFC Reader Driver...";
 
 ; This line runs your actual application after installation is complete.
-Filename: "{app}\Elixion Niviu Network Configuration Tool v0.5.3.exe"; Description: "{cm:LaunchProgram,Elixion Niviu}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Elixion Niviu Network Configuration Tool v0.5.4.exe"; Description: "{cm:LaunchProgram,Elixion Niviu}"; Flags: nowait postinstall skipifsilent
 
 [Code]
 function VCRedistNeedsInstall: Boolean;
