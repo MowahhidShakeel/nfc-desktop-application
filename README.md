@@ -18,6 +18,7 @@ The data encoding follows a size-optimized binary record format where each recor
 | 0.5.1   | 2025-09-23      | Bug fixes: Improved error handling in NFC operations, fixed IP/netmask validation, ensured padding and end-of-records (`0x00`) in serialization. |
 | 0.5.2   | 2025-09-30      | Logging enhancements: Moved logs to `%APPDATA%` for non-admin access. Added debug levels and UTF-8 encoding. GUI asset path fixes for PyInstaller bundling. |
 | 0.5.3   | 2025-11-17  | Final Release: Screen-aware resizing, theme stylesheet, close event disconnect. Updated documentation, troubleshooting, and sources. Project testing and completion with full multi-tag read/write support per **20250724_NFC-Tag-Specfication.pdf**. |
+| 0.5.4   | 2025-12-22  | Default password value set in the memory for empty string. "Identity" parameter is now compulsory in WPA2 Enterprise Mode in the Wi-Fi section. |
 ---
 
 ## Features
@@ -119,21 +120,6 @@ The binary can contain different data types, they are encoded by the most signif
 | 0     | 1     | `0x40` to `0x7F` | Binary IPv4 address, first byte of dotted decimal notation first. | 4 |
 | 1     | 0     | `0x80` to `0xBF` | A single byte, used for booleans (0 = false, 1 = true), for flag bits, and for small numbers. | 1 |
 | 1     | 1     | `0xC0` to `0xFF` | Reserved for future use — will be defined later. | — |
-
----
-
-## SDP-3 Statement of Work
-
-Application writing network configuration to NFC tags
-
-- **Objective**: Develop a Windows desktop tool to configure and write network settings to MIFARE Ultralight C tags
-- **Scope**: GUI, validation, multi-tag support, installer, documentation
-- **Compliance**: ENNC-1 to ENNC-21 (see `20250724_Requirements.xlsx`)
-- **Deliverables**:
-  - Source code
-  - PyInstaller + Inno Setup installer
-  - Full documentation
-  - Testable on Windows 11 (incl. Parallels VM)
 
 ---
 
