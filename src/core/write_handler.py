@@ -29,7 +29,7 @@ class MultiCardWriteHandler:
             if wifi.get("ssid"): records.append((0x02, wifi["ssid"].encode('ascii') + b'\x00'))
             if wifi.get("enterpriseIdentity"): records.append((0x03, wifi["enterpriseIdentity"].encode('ascii') + b'\x00'))
             if wifi.get("enterpriseUsername"): records.append((0x04, wifi["enterpriseUsername"].encode('ascii') + b'\x00'))
-            records.append((0x05, wifi["password"].encode('ascii') + b'\x00')) # Write the wifi packet, even if password is empty
+            records.append((0x05, wifi["password"].encode('ascii') + b'\x00')) # Add wifi records, even if empty
             if wifi.get("enterpriseMode"):
                 mode_map = {"": 0xFF, "EAP-TLS": 0x00, "EAP-PEAP": 0x01, "EAP-TTLS": 0x02}
                 mode = mode_map.get(wifi["enterpriseMode"], 0xFF)

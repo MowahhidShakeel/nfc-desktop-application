@@ -238,7 +238,6 @@ class WriteTagsTab(QWidget):
         if not self.write_handler:
             try:
                 config = self.parent.get_config()
-                print(config)
                 self.write_handler = MultiCardWriteHandler(self.nfc_handler, config)
                 self.writing_box.setEnabled(True)
                 self.process_single_tag()

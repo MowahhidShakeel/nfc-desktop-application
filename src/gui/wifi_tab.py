@@ -212,16 +212,26 @@ class WifiTab(QWidget):
         self.clear_error_styles()
         if not self.ssid.text().strip():
             errors.append(self.ssid)
+        
+        # "Identity" can't be empty in WPA2 Enterprise mode
+        if ((self.security_type.currentText() == "WPA2 Enterprise")  and not (self.enterprise_identity.text().strip())):
+            errors.append(self.enterprise_identity)
+            
         if errors:
             for widget in errors:
-                widget.setStyleSheet("""
-                    QLineEdit {
-                        border: 1px solid red;
-                        border-radius: 4px;
-                        padding: 4px;
-                    }
-                """)
-            self.parent.log("[WIFI] Validation error: SSID cannot be empty.", level="ERROR")
+                if isinstance(widget, QLineEdit):
+                    widget.setStyleSheet("""
+                        QLineEdit {
+                            border: 1px solid red;
+                            border-radius: 4px;
+                            padding: 4px;
+                        }
+                    """)
+
+            if (self.ssid) in errors:
+                self.parent.log("[WIFI] Validation error: SSID cannot be empty.", level="ERROR")
+            if (self.enterprise_identity) in errors:
+                self.parent.log("[WIFI] Validation error: WPA2 Enterprise Identity cannot be empty.", level="ERROR")
             return False
         
         self.parent.log("[WIFI] WiFi configuration validated successfully.", level="INFO")
@@ -229,3 +239,4 @@ class WifiTab(QWidget):
 
     def clear_error_styles(self):
         self.set_field_style(self.ssid)
+        self.set_field_style(self.enterprise_identity)
