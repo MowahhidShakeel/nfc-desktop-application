@@ -84,8 +84,7 @@ class NFCWindow(QMainWindow):
         self.tabs.currentChanged.connect(lambda idx:
             self.read_tags_tab.tab_shown() if self.tabs.widget(idx) == self.read_tags_tab else None
         )
-         
-            
+             
         # Log area
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
@@ -228,6 +227,7 @@ class NFCWindow(QMainWindow):
                 return
             config = self.get_config()
             self.nfc.write_full_config(config)
+            print("wrote")
             self.log("Successfully wrote configuration to NFC tag", level="INFO")
         except Exception as e:
             self.log(f"Write NFC error: {e}", level="ERROR")

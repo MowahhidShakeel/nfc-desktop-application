@@ -63,6 +63,9 @@ class NFCHandler:
         data, sw1, sw2 = self.connection.transmit(apdu)
         if (sw1, sw2) != (0x90, 0x00):
             raise RuntimeError(f"Read failed SW={sw1:02X}{sw2:02X}")
+        #print(data)
+        hex_list = [hex(x) for x in data]
+        print(hex_list) 
         return bytes(data)
 
     def _acr1252_write_page(self, page, data4):
