@@ -10,3 +10,4 @@ installer/setup
 venv-build
 build/
 dist/
+myenv

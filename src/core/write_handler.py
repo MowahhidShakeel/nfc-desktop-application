@@ -29,7 +29,7 @@ class MultiCardWriteHandler:
             if wifi.get("ssid"): records.append((0x02, wifi["ssid"].encode('ascii') + b'\x00'))
             if wifi.get("enterpriseIdentity"): records.append((0x03, wifi["enterpriseIdentity"].encode('ascii') + b'\x00'))
             if wifi.get("enterpriseUsername"): records.append((0x04, wifi["enterpriseUsername"].encode('ascii') + b'\x00'))
-            if wifi.get("password"): records.append((0x05, wifi["password"].encode('ascii') + b'\x00'))
+            records.append((0x05, wifi["password"].encode('ascii') + b'\x00')) # Add wifi records, even if empty
             if wifi.get("enterpriseMode"):
                 mode_map = {"": 0xFF, "EAP-TLS": 0x00, "EAP-PEAP": 0x01, "EAP-TTLS": 0x02}
                 mode = mode_map.get(wifi["enterpriseMode"], 0xFF)
@@ -117,7 +117,7 @@ class MultiCardWriteHandler:
     def process_next_card(self):
         """
         Processes and writes the data for the next card in the sequence.
-        This should be called by your GUI's 'Proceed' button.
+        Called by the GUI's 'Proceed' button.
         """
         if self.current_card >= self.num_cards:
             return {"status": "finished", "message": "All data written successfully!"}
@@ -127,8 +127,7 @@ class MultiCardWriteHandler:
         max_card_size = 144
         chunk = b""
         
-        # This is the chunking logic from your original function
-        # Determine Tag Flags
+        # Chunking logic, determine Tag Flags
         if card_index == 0:
             if self.num_cards > 1: chunk += bytes([0x81, 0x01]) # More tags, clear data
         elif card_index < self.num_cards - 1:
