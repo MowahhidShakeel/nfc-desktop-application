@@ -1,14 +1,9 @@
-# You'll need to import the 'ipaddress' module
 import ipaddress
 
 class MultiCardWriteHandler:
     def __init__(self, nfc_writer, config):
         """
         Initializes the handler but does not start the writing process yet.
-        
-        Args:
-            nfc_writer: An instance of your class that has the 'read_write_nfc' method.
-            config: The full configuration dictionary to be written.
         """
         self.nfc_writer = nfc_writer
         self.config = config
@@ -29,12 +24,16 @@ class MultiCardWriteHandler:
             if wifi.get("ssid"): records.append((0x02, wifi["ssid"].encode('ascii') + b'\x00'))
             if wifi.get("enterpriseIdentity"): records.append((0x03, wifi["enterpriseIdentity"].encode('ascii') + b'\x00'))
             if wifi.get("enterpriseUsername"): records.append((0x04, wifi["enterpriseUsername"].encode('ascii') + b'\x00'))
-            records.append((0x05, wifi["password"].encode('ascii') + b'\x00')) # Add wifi records, even if empty
-            if wifi.get("enterpriseMode"):
+            
+            # FIX: Use .get() to prevent KeyError if password key is entirely missing
+            records.append((0x05, wifi.get("password", "").encode('ascii') + b'\x00')) 
+            
+            # FIX: Use 'in' to ensure empty strings are processed instead of evaluating to False
+            if "enterpriseMode" in wifi:
                 mode_map = {"": 0xFF, "EAP-TLS": 0x00, "EAP-PEAP": 0x01, "EAP-TTLS": 0x02}
                 mode = mode_map.get(wifi["enterpriseMode"], 0xFF)
                 records.append((0x86, bytes([mode])))
-            if wifi.get("securityMode"):
+            if "securityMode" in wifi:
                 sec_map = {
                     "": 0x00,
                     "Don't use certificates": 0x00,
@@ -55,57 +54,48 @@ class MultiCardWriteHandler:
             if mqtt.get("password"):
                 records.append((0x12, mqtt["password"].encode('ascii') + b'\x00'))
 
-            # IP records
-            if self.config.get("ip"):
-                ip_config = self.config["ip"]
-                if ip_config.get("ipAddress"):
-                    ip = ipaddress.ip_address(ip_config["ipAddress"])
-                    records.append((0x60, ip.packed))
-                if ip_config.get("netmask"):
-                    records.append((0xA1, bytes([int(ip_config["netmask"])])))
-                if ip_config.get("gateway"):
-                    ip = ipaddress.ip_address(ip_config["gateway"])
-                    records.append((0x62, ip.packed))
-                if ip_config.get("dns1"):
-                    ip = ipaddress.ip_address(ip_config["dns1"])
-                    records.append((0x63, ip.packed))
-                if ip_config.get("dns2"):
-                    ip = ipaddress.ip_address(ip_config["dns2"])
-                    records.append((0x64, ip.packed))
-                if ip_config.get("dns3"):
-                    ip = ipaddress.ip_address(ip_config["dns3"])
-                    records.append((0x65, ip.packed))
-
-            # SNTP records
-            if self.config.get("sntp"):
-                sntp = self.config["sntp"]
-                if sntp.get("server1", {}).get("value"):
-                    try:
-                        ip = ipaddress.ip_address(sntp["server1"]["value"])
-                        records.append((0x70, ip.packed))
-                    except ValueError:
-                        records.append((0x30, sntp["server1"]["value"].encode('ascii') + b'\x00'))
-                if sntp.get("server2", {}).get("value"):
-                    try:
-                        ip = ipaddress.ip_address(sntp["server2"]["value"])
-                        records.append((0x71, ip.packed))
-                    except ValueError:
-                        records.append((0x31, sntp["server2"]["value"].encode('ascii') + b'\x00'))
-                if sntp.get("server3", {}).get("value"):
-                    try:
-                        ip = ipaddress.ip_address(sntp["server3"]["value"])
-                        records.append((0x72, ip.packed))
-                    except ValueError:
-                        records.append((0x32, sntp["server3"]["value"].encode('ascii') + b'\x00'))
         # IP records
         if self.config.get("ip"):
             ip_config = self.config["ip"]
-            if ip_config.get("ipAddress"): records.append((0x60, ipaddress.ip_address(ip_config["ipAddress"]).packed))
-            if ip_config.get("netmask"): records.append((0xA1, bytes([int(ip_config["netmask"])])))
-            if ip_config.get("gateway"): records.append((0x62, ipaddress.ip_address(ip_config["gateway"]).packed))
-            if ip_config.get("dns1"): records.append((0x63, ipaddress.ip_address(ip_config["dns1"]).packed))
-            if ip_config.get("dns2"): records.append((0x64, ipaddress.ip_address(ip_config["dns2"]).packed))
-            if ip_config.get("dns3"): records.append((0x65, ipaddress.ip_address(ip_config["dns3"]).packed))
+            if ip_config.get("ipAddress"):
+                ip = ipaddress.ip_address(ip_config["ipAddress"])
+                records.append((0x60, ip.packed))
+            if ip_config.get("netmask"):
+                records.append((0xA1, bytes([int(ip_config["netmask"])])))
+            if ip_config.get("gateway"):
+                ip = ipaddress.ip_address(ip_config["gateway"])
+                records.append((0x62, ip.packed))
+            if ip_config.get("dns1"):
+                ip = ipaddress.ip_address(ip_config["dns1"])
+                records.append((0x63, ip.packed))
+            if ip_config.get("dns2"):
+                ip = ipaddress.ip_address(ip_config["dns2"])
+                records.append((0x64, ip.packed))
+            if ip_config.get("dns3"):
+                ip = ipaddress.ip_address(ip_config["dns3"])
+                records.append((0x65, ip.packed))
+
+        # SNTP records
+        if self.config.get("sntp"):
+            sntp = self.config["sntp"]
+            if sntp.get("server1", {}).get("value"):
+                try:
+                    ip = ipaddress.ip_address(sntp["server1"]["value"])
+                    records.append((0x70, ip.packed))
+                except ValueError:
+                    records.append((0x30, sntp["server1"]["value"].encode('ascii') + b'\x00'))
+            if sntp.get("server2", {}).get("value"):
+                try:
+                    ip = ipaddress.ip_address(sntp["server2"]["value"])
+                    records.append((0x71, ip.packed))
+                except ValueError:
+                    records.append((0x31, sntp["server2"]["value"].encode('ascii') + b'\x00'))
+            if sntp.get("server3", {}).get("value"):
+                try:
+                    ip = ipaddress.ip_address(sntp["server3"]["value"])
+                    records.append((0x72, ip.packed))
+                except ValueError:
+                    records.append((0x32, sntp["server3"]["value"].encode('ascii') + b'\x00'))
 
         records.append((0x00, b'')) # Add end of record list
 

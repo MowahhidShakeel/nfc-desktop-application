@@ -19,6 +19,7 @@ The data encoding follows a size-optimized binary record format where each recor
 | 0.5.2   | 2025-09-30      | Logging enhancements: Moved logs to `%APPDATA%` for non-admin access. Added debug levels and UTF-8 encoding. GUI asset path fixes for PyInstaller bundling. |
 | 0.5.3   | 2025-11-17  | Final Release: Screen-aware resizing, theme stylesheet, close event disconnect. Updated documentation, troubleshooting, and sources. Project testing and completion with full multi-tag read/write support per **20250724_NFC-Tag-Specfication.pdf**. |
 | 0.5.4   | 2025-12-22  | Default password value set in the memory for empty string. "Identity" parameter is now compulsory in WPA2 Enterprise Mode in the Wi-Fi section. |
+| 0.5.5   | 2026-4-12  | Fixed bug where "Security Type" was setting WPA2 Personal by default, even after reading and importing JSON settings that had a different value.  |
 ---
 
 ## Features

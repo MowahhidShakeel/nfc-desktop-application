@@ -270,6 +270,17 @@ class NFCWindow(QMainWindow):
         self.wifi_tab.ssid.setText(config["wifi"].get("ssid", ""))
         self.wifi_tab.password.setText(config["wifi"].get("password", ""))
 
+        ent_mode = config["wifi"].get("enterpriseMode", "")
+        ent_id = config["wifi"].get("enterpriseIdentity", "")
+        ent_user = config["wifi"].get("enterpriseUsername", "")
+        
+        # If any enterprise data exists, switch the dropdown to WPA2 Enterprise
+        if ent_mode or ent_id or ent_user:
+            self.wifi_tab.security_type.setCurrentText("WPA2 Enterprise")
+        else:
+            self.wifi_tab.security_type.setCurrentText("WPA2 Personal")
+        # -----------------------------------------------------
+
         # If enterpriseMode is stored as index:
         if isinstance(config["wifi"].get("enterpriseMode"), int):
             self.wifi_tab.enterprise_mode.setCurrentIndex(config["wifi"]["enterpriseMode"])

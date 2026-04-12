@@ -33,13 +33,23 @@ class MultiCardReadHandler:
         while i < len(data) and i < 144:
             key = data[i]
             i += 1
+            
             if key == 0x00: # End of record list for this card
                 self.all_records.append((0x00, b''))
                 break
             if key == 0x81: # Tag Flags
                 i += 1
                 continue
+                
             value = b""
+
+            if key in (0x06, 0x07): 
+                if i < len(data):
+                    value = int(data[i])
+                    i += 1
+                self.all_records.append((key, value))
+                continue
+                
             if (key & 0xC0) == 0x00 and (key & 0x3F) != 0:  # String
                 while i < len(data) and data[i] != 0x00:
                     value += bytes([data[i]])
@@ -139,14 +149,14 @@ class MultiCardReadHandler:
                         0x01: "EAP-PEAP",
                         0x02: "EAP-TTLS",
                         0xFF: ""
-                    }.get(value, "")
+                    }.get(value if isinstance(value, int) else -1, "")
                 elif key_id == 0x07:
                     config["wifi"]["securityMode"] = {
                         0x00: "Don't use certificates",
                         0x01: "Send client certificate",
                         0x02: "Verify server certificate",
                         0x03: "Send client certificate + verify server certificate"
-                    }.get(value, "")
+                    }.get(value if isinstance(value, int) else -1, "")
                 elif key_id == 0x10 or key_id == 0x50: config["mqtt"]["host"] = value
                 elif key_id == 0x11: config["mqtt"]["username"] = value
                 elif key_id == 0x12: config["mqtt"]["password"] = value
@@ -155,10 +165,10 @@ class MultiCardReadHandler:
                     has_ip_data = True
                 elif key_id == 0x21: #  ID for Netmask is 0x21
                     ip_values["netmask"] = str(value)
-                    has_ip_data = True # 
+                    has_ip_data = True 
                 elif key_id == 0x22: # ID for Gateway
                     ip_values["gateway"] = value
-                    has_ip_data = True # 
+                    has_ip_data = True 
                 elif key_id == 0x23: # ID for DNS1 
                     ip_values["dns1"] = value
                     has_ip_data = True 
@@ -172,9 +182,8 @@ class MultiCardReadHandler:
                 elif key_id == 0x31 or key_id == 0x71: config["sntp"]["server2"] = {"value": value}
                 elif key_id == 0x32 or key_id == 0x72: config["sntp"]["server3"] = {"value": value}
 
-            # Update config["ip"] if IP data exists
         if has_ip_data:
-            config["ip"] = {"dhcpEnabled": False}
+            config["ip"]["dhcpEnabled"] = False
             config["ip"].update(ip_values)
 
         return config
